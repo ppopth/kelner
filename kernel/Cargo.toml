@@ -1,0 +1,9 @@
+[package]
+name = "kernel"
+version = "0.0.1"
+authors = ["Suphanat Chunhapanya <haxx.pop@gmail.com>"]
+
+[lib]
+name = "kernel"
+path = "src/lib.rs"
+crate_type = ["staticlib"]
