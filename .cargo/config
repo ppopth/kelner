@@ -1,0 +1,5 @@
+[build]
+rustflags = [
+  "-C", "link-arg=-Tkernel/layout.ld",
+  "-C", "link-arg=-nostartfiles",
+]
