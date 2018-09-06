@@ -13,36 +13,25 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![feature(panic_handler, start, doc_cfg)]
-#![no_std]
-#![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
-#[cfg(not(test))]
-use core::panic::PanicInfo;
+extern crate util;
+use util::set_bits;
 
-#[cfg(not(test))]
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    hello();
-    loop {}
+#[test]
+fn valid_input() {
+    let input: u8 = 0b11111111;
+    assert_eq!(set_bits(input, 2, 5, 0b010), 0b11101011);
 }
 
-#[cfg(not(test))]
-fn hello() {
-    let hello_str: &[u8] = b"Hello World!";
-    let vga_buffer = 0xb8000 as *mut u8;
-
-    for (i, &byte) in hello_str.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
+#[test]
+#[should_panic]
+fn beyond_the_size_of_input() {
+    set_bits(0 as u32, 0, 33, 0);
 }
 
-#[cfg(not(test))]
-#[panic_handler]
-#[no_mangle]
-pub fn panic(_info: &PanicInfo) -> ! {
-    loop {}
+#[test]
+#[should_panic]
+fn too_large_value() {
+    set_bits(0 as u32, 0, 2, 4);
 }
+

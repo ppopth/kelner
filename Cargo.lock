@@ -1,4 +1,18 @@
 [[package]]
 name = "kernel"
 version = "0.0.1"
+dependencies = [
+ "paging 0.0.1",
+]
+
+[[package]]
+name = "paging"
+version = "0.0.1"
+dependencies = [
+ "util 0.0.1",
+]
+
+[[package]]
+name = "util"
+version = "0.0.1"
 

@@ -31,6 +31,11 @@ debug: build/diskdev
 	qemu-system-$(ARCH) -s -S -drive file=$<,format=raw & \
 	gdb && fg
 
+.PHONY: check
+check:
+	mkdir -p build
+	cargo test
+
 build/disk: build/kernel bootloader/*
 	mkdir -p build
 	nasm -f bin -o $@ \

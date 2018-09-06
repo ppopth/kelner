@@ -1,4 +1,4 @@
-[build]
+[target.'cfg(not(test))']
 rustflags = [
   "-C", "link-arg=-Tkernel/layout.ld",
   "-C", "link-arg=-nostartfiles",
