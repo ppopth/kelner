@@ -99,23 +99,19 @@ enable_a20:
 
 .already_enabled:
     mov si, a20_msg.already_enabled
-    call puts
-    call putnl
+    call bios_println
     ret
 .enabled_using_bios:
     mov si, a20_msg.enable_using_bios
-    call puts
-    call putnl
+    call bios_println
     ret
 .enabled_using_keyboard:
     mov si, a20_msg.enable_using_keyboard
-    call puts
-    call putnl
+    call bios_println
     ret
 .enabled_using_fast:
     mov si, a20_msg.enable_using_fast
-    call puts
-    call putnl
+    call bios_println
     ret
 
 a20_msg:

@@ -71,6 +71,6 @@ long_mode_notsupported:
     jmp error
 
 cpu_msg:
-.cpuid_notsupported:          db "CPUID is not supported.", 0
+.cpuid_notsupported:           db "CPUID is not supported.", 0
 .extended_cpuid_notsupported:  db "Extened CPUID is not supported.", 0
 .long_mode_notsupported:       db "Long mode is not supported.", 0

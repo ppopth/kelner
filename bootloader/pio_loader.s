@@ -20,7 +20,30 @@ pio_load:
     ; This is an initial loading address. If you want to change this value,
     ; do not forget to change it at `kernel/layout.ld` as well because
     ; currently I do not know how to refactor it.
-    mov rax, 0x100000
+.initial_load_address:  equ 0x100000
+
+    mov rax, .initial_load_address + (payload_end - payload_start)
+    call vga_printa
+    call vga_printnl
+
+    ; Print BSS_SIZE
+    mov si, pio_loader_msg.bss_size
+    call vga_print
+    mov rax, BSS_SIZE
+    call vga_printa
+    call vga_printnl
+
+    ; We need to add BSS_SIZE here because it isn't included in the
+    ; payload yet.
+    mov rax, .initial_load_address + (BSS_SIZE + payload_end - payload_start)
+    ; The range between 0x100000 and 0x8000000 is for code and data, this
+    ; means that if the payload_end is beyond 0x8000000, it will go out
+    ; of the range. We need to throw an error here.
+    mov rbx, 0x8000000
+    cmp rax, rbx
+    ja .out_of_range
+
+    mov rax, .initial_load_address
     mov [.load_address], rax
     ; 512 must already divide the size of the payload because we
     ; already pad it with zeroes.
@@ -94,7 +117,7 @@ pio_load:
     in al, dx
     ; Test if flag ERR or DF is set. If so, there is an error.
     test al, 0x21
-    jnz .error
+    jnz .load_error
     ; Test DRQ. If set, we can read the data now.
     test al, 0x08
     jz .repl
@@ -137,7 +160,13 @@ pio_load:
     jnz .loop
 
     ret
-.error:
+.out_of_range:
+    mov si, pio_loader_msg.out_of_range
+    call vga_println
+    hlt
+.load_error:
+    mov si, pio_loader_msg.load_error
+    call vga_println
     hlt
 .load_address:  dq 0
 .sector_left:   dq 0
@@ -158,3 +187,7 @@ wait_400ns:
     in al, dx
     in al, dx
     ret
+
+pio_loader_msg:
+.out_of_range:  db "The kernel image is too large. Please make it smaller.", 0
+.load_error:    db "There is an unknown error while loading kernel image.", 0

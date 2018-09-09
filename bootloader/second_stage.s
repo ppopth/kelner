@@ -40,6 +40,9 @@ second_stage_start:
     ; Entering long mode now!
     jmp gdt.code:long_mode_entry
 
+second_stage_msg:
+.in_long_mode:  db "We are in long mode already :)", 0
+
 %include "cpu.s"
 %include "a20.s"
 %include "paging.s"
@@ -57,8 +60,13 @@ long_mode_entry:
     mov gs, ax
     mov ss, ax
 
+    mov si, second_stage_msg.in_long_mode
+    call vga_println
+
     call pio_load
     jmp ENTRY_POINT
+
+%include "vga_print.s"
 
 ; Pad to make payload_start aligned with the sector
 align 512

@@ -37,8 +37,7 @@ start:
 
     ; Show initial booting message.
     mov si, bootsector_msg.booting
-    call puts
-    call putnl
+    call bios_println
 
     call bios_load
 
@@ -46,17 +45,16 @@ start:
 
 ; Show the error message in si and halt.
 error:
-    call puts
-    call putsp
+    call bios_print
+    call bios_printsp
     mov si, bootsector_msg.halted
-    call puts
-    call putnl
+    call bios_println
 .halt:
     cli
     hlt
     jmp .halt
 
-%include "puts.s"
+%include "bios_print.s"
 %include "bios_loader.s"
 
 data:
