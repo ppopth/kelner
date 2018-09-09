@@ -33,6 +33,7 @@ vga_print:
 .done:
     ret
 
+; Print a new line character
 vga_printnl:
     mov bl, [vga_printc.cursor_y]
     inc bl
@@ -44,6 +45,43 @@ vga_printnl:
     mov bl, 0
     mov [vga_printc.cursor_x], bl
     ret
+
+; Print address in rax
+vga_printa:
+  mov rbx, rax
+  mov rcx, 16
+.loop:
+  dec rcx
+  mov rax, rcx
+  mov rdx, 4
+  mul rdx
+  mov rdx, rbx
+
+  mov rsi, rcx
+  mov rcx, rax
+  shr rdx, cl
+  mov rcx, rsi
+
+  and dl, 0xf
+  cmp dl, 10
+  jb .small
+  add dl, 'a'
+  sub dl, 10
+  jmp .endif
+.small:
+  add dl, '0'
+.endif:
+
+  push rcx
+  push rbx
+  mov al, dl
+  call vga_printc
+  pop rbx
+  pop rcx
+  test rcx, rcx
+  jnz .loop
+
+  ret
 
 ; Print a character at al.
 vga_printc:

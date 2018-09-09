@@ -26,13 +26,9 @@ bits 64
 align 512
 payload_start:
 
-%ifdef KERNEL_FILE
-%ifdef ENTRY_POINT
-    %defstr KERNEL_STR %[KERNEL_FILE]
-    incbin KERNEL_STR
-    hlt
-%endif
-%endif
+%defstr KERNEL_STR %[KERNEL_FILE]
+incbin KERNEL_STR
+hlt
 
 ; Pad to make payload_end aligned with the sector
 align 512

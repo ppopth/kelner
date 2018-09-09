@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![feature(panic_handler, start, doc_cfg)]
+#![feature(panic_handler, doc_cfg)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 

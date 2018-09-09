@@ -22,6 +22,16 @@ pio_load:
     ; currently I do not know how to refactor it.
 .initial_load_address:  equ 0x100000
 
+    ; Print payload_start
+    mov si, pio_loader_msg.payload_start
+    call vga_print
+    mov rax, .initial_load_address
+    call vga_printa
+    call vga_printnl
+
+    ; Print payload_end
+    mov si, pio_loader_msg.payload_end
+    call vga_print
     mov rax, .initial_load_address + (payload_end - payload_start)
     call vga_printa
     call vga_printnl
@@ -159,6 +169,11 @@ pio_load:
     test rax, rax
     jnz .loop
 
+    ; Clear BSS section.
+    xor rax, rax
+    mov rcx, BSS_SIZE
+    rep stosb
+
     ret
 .out_of_range:
     mov si, pio_loader_msg.out_of_range
@@ -189,5 +204,8 @@ wait_400ns:
     ret
 
 pio_loader_msg:
-.out_of_range:  db "The kernel image is too large. Please make it smaller.", 0
-.load_error:    db "There is an unknown error while loading kernel image.", 0
+.out_of_range:   db "The kernel image is too large. Please make it smaller.", 0
+.load_error:     db "There is an unknown error while loading kernel image.", 0
+.payload_start:  db "payload_start ", 0
+.payload_end:    db "payload_end   ", 0
+.bss_size:       db "bss_size      ", 0

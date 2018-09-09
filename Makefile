@@ -42,6 +42,8 @@ build/disk: build/kernel bootloader/*
 		-D KERNEL_FILE=../$< -ibootloader/ \
 		-D ENTRY_POINT=$(shell objdump -f target/release/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \
+		-D BSS_SIZE=$(shell size -x target/release/kernel | tr -s ' ' | \
+			cut -d ' ' -f 3 | tail -n 1) \
 		bootloader/disk.s
 
 build/diskdev: build/kerneldev bootloader/*
@@ -49,7 +51,9 @@ build/diskdev: build/kerneldev bootloader/*
 	nasm -f bin -o $@ \
 		-D KERNEL_FILE=../$< -ibootloader/ \
 		-D ENTRY_POINT=$(shell objdump -f target/debug/kernel | \
-			 grep "start address" | cut -d ' ' -f 3) \
+			grep "start address" | cut -d ' ' -f 3) \
+		-D BSS_SIZE=$(shell size -x target/debug/kernel | tr -s ' ' | \
+			cut -d ' ' -f 3 | tail -n 1) \
 		bootloader/disk.s
 
 build/kernel: $(shell find kernel -type f) Cargo.toml
