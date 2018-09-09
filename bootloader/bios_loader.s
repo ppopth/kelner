@@ -33,29 +33,29 @@ check_int13h_extension:
     mov si, loader_msg.extension_notsupported
     jmp error
 
-; Load the payload to the memory.
-load:
+; Load the second stage to the memory.
+bios_load:
     ; We have to check if we can use it before using it.
     call check_int13h_extension
 
-    ; 512 must already divide the size of the payload because we already pad
-    ; it with zeroes.
-    mov ax, (payload_end - payload_start) / 512
+    ; 512 must already divide the size of the second stage because we
+    ; already pad it with zeroes.
+    mov ax, (second_stage_end - second_stage_start) / 512
     ; If the number of sectors is greater than 127, we cannot load it using
     ; some Phoenix BIOSes. So it is better for the developers to reduce the
-    ; size of the payload instead.
+    ; size of the second stage instead.
     cmp ax, 127
-    ja .payload_too_large
+    ja .second_stage_too_large
     mov [dap.number], ax
 
-    mov ax, payload_start
+    mov ax, second_stage_start
     mov [dap.offset], ax
 
     mov ax, 0
     mov [dap.segment], ax
 
     ; start should be zero so this should not be a problem either.
-    mov eax, (payload_start - start) / 512
+    mov eax, (second_stage_start - start) / 512
     mov [dap.address], eax
 
     mov ah, 0x42
@@ -67,8 +67,8 @@ load:
 
     ret
 
-.payload_too_large:
-    mov si, loader_msg.payload_too_large
+.second_stage_too_large:
+    mov si, loader_msg.second_stage_too_large
     jmp error
 .load_error:
     mov si, loader_msg.load_error
@@ -85,7 +85,7 @@ dap:
                  dd 0
 
 loader_msg:
-.payload_too_large:       db "The payload is too large. We cannot load it ", \
-                             "using some BIOSes.", 0
+.second_stage_too_large:  db "The second stage is too large. ", \
+                             "We cannot load it using some BIOSes.", 0
 .load_error:              db "Errors found while booting Kelner.", 0
 .extension_notsupported:  db "INT 13h extension is not supported.", 0

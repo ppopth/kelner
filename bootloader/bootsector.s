@@ -40,9 +40,9 @@ start:
     call puts
     call putnl
 
-    call load
+    call bios_load
 
-    jmp payload_start
+    jmp second_stage_start
 
 ; Show the error message in si and halt.
 error:
@@ -57,7 +57,7 @@ error:
     jmp .halt
 
 %include "puts.s"
-%include "loader.s"
+%include "bios_loader.s"
 
 data:
 .disk_number:    db 0
