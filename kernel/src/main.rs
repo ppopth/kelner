@@ -17,6 +17,8 @@
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
+mod util;
+
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 

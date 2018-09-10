@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 
+extern crate core;
+
+mod tests;
+
 /// Set bits at position `start` to position `end`, not including `end`.
 /// # Example
 /// ```
@@ -21,17 +25,18 @@
 /// let result = util::set_bits(input, 2, 5, 0b100);
 /// assert_eq!(result, 0b10110000);
 /// ```
+#[allow(dead_code)]
 pub fn set_bits<T>(var: T, start: u8, end: u8, val: T) -> T
     where T: PartialOrd + From<u8>
-             + std::ops::Shr<Output=T> + std::ops::Shl<Output=T>
-             + std::ops::Not<Output=T> + std::ops::BitAnd<Output=T>
-             + std::ops::AddAssign
+             + core::ops::Shr<Output=T> + core::ops::Shl<Output=T>
+             + core::ops::Not<Output=T> + core::ops::BitAnd<Output=T>
+             + core::ops::AddAssign
 {
-    let size = (std::mem::size_of::<T>() * 8) as u8;
+    let size = (core::mem::size_of::<T>() * 8) as u8;
     assert!(end > start);
     assert!(end <= size);
     // Assert that val is less than 2^(end-start).
-    assert!(val < !(T::from(0)) >> T::from(size - end + start));
+    assert!(val <= !(T::from(0)) >> T::from(size - end + start));
 
     // Reset bits from start to end, excluding end.
     let mut result = var & !((!(T::from(0)) >> T::from(size - end + start))

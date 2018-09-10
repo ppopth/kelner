@@ -3,4 +3,20 @@ name = "kernel"
 version = "0.0.1"
 authors = ["Suphanat Chunhapanya <haxx.pop@gmail.com>"]
 
+[profile.dev]
+# XXX: We cannot use opt-level = 0 or 1 here. I do not know why. Maybe, I
+# should spend time looking at Rust compiler code.
+opt-level = 2
+# XXX: Also if we make `incremental` to be true, our kernel panics. I do not
+# know why too.
+incremental = false
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[profile.test]
+opt-level = 2
+incremental = false
+
 [dependencies]

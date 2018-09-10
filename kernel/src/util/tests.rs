@@ -14,13 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 
-extern crate util;
-use util::set_bits;
+#[cfg(test)]
+use super::*;
 
 #[test]
-fn valid_input() {
+fn valid_input_u8() {
     let input: u8 = 0b11111111;
     assert_eq!(set_bits(input, 2, 5, 0b010), 0b11101011);
+}
+
+#[test]
+fn valid_input_u64() {
+    let input: u64 = 0;
+    assert_eq!(set_bits(input, 48, 64, 0xffff), 0xffff << 48);
 }
 
 #[test]
@@ -34,4 +40,3 @@ fn beyond_the_size_of_input() {
 fn too_large_value() {
     set_bits(0 as u32, 0, 2, 4);
 }
-

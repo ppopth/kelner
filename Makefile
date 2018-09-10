@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 ARCH=x86_64
+CARGO=cargo
+RUSTFLAGS=-Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
+MANIFESTPATH=kernel/Cargo.toml
+TARGETDIR=target
 
 .PHONY: all
 all: build/disk
@@ -34,7 +38,21 @@ debug: build/diskdev
 .PHONY: check
 check:
 	mkdir -p build
-	cargo test
+	$(CARGO) test \
+		--manifest-path $(MANIFESTPATH) \
+		--target-dir $(TARGETDIR)
+
+.PHONY: doc
+doc:
+	$(CARGO) doc \
+		--manifest-path $(MANIFESTPATH) \
+		--target-dir $(TARGETDIR)
+
+.PHONY: privdoc
+privdoc:
+	$(CARGO) doc --document-private-items \
+		--manifest-path $(MANIFESTPATH) \
+		--target-dir $(TARGETDIR)
 
 build/disk: build/kernel bootloader/*
 	mkdir -p build
@@ -56,12 +74,18 @@ build/diskdev: build/kerneldev bootloader/*
 			cut -d ' ' -f 3 | tail -n 1) \
 		bootloader/disk.s
 
-build/kernel: $(shell find kernel -type f) Cargo.toml
+build/kernel: $(shell find kernel -type f)
 	mkdir -p build
-	cargo build --release
+	$(CARGO) rustc \
+		--manifest-path $(MANIFESTPATH) \
+		--target-dir $(TARGETDIR) \
+		--release -- $(RUSTFLAGS)
 	objcopy -O binary -S target/release/kernel $@
 
-build/kerneldev: $(shell find kernel -type f) Cargo.toml
+build/kerneldev: $(shell find kernel -type f)
 	mkdir -p build
-	cargo build
+	$(CARGO) rustc \
+		--manifest-path $(MANIFESTPATH) \
+		--target-dir $(TARGETDIR) \
+		-- $(RUSTFLAGS)
 	objcopy -O binary -S target/debug/kernel $@
