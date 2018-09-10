@@ -17,10 +17,16 @@
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
+#[cfg(not(test))]
+mod alloc;
 mod util;
 
 #[cfg(not(test))]
 use core::panic::PanicInfo;
+
+#[cfg(not(test))]
+#[global_allocator]
+static ALLOCATOR: alloc::Allocator = alloc::Allocator;
 
 #[cfg(not(test))]
 #[no_mangle]
