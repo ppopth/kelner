@@ -48,40 +48,40 @@ vga_printnl:
 
 ; Print address in rax
 vga_printa:
-  mov rbx, rax
-  mov rcx, 16
+    mov rbx, rax
+    mov rcx, 16
 .loop:
-  dec rcx
-  mov rax, rcx
-  mov rdx, 4
-  mul rdx
-  mov rdx, rbx
+    dec rcx
+    mov rax, rcx
+    mov rdx, 4
+    mul rdx
+    mov rdx, rbx
 
-  mov rsi, rcx
-  mov rcx, rax
-  shr rdx, cl
-  mov rcx, rsi
+    mov rsi, rcx
+    mov rcx, rax
+    shr rdx, cl
+    mov rcx, rsi
 
-  and dl, 0xf
-  cmp dl, 10
-  jb .small
-  add dl, 'a'
-  sub dl, 10
-  jmp .endif
+    and dl, 0xf
+    cmp dl, 10
+    jb .small
+    add dl, 'a'
+    sub dl, 10
+    jmp .endif
 .small:
-  add dl, '0'
+    add dl, '0'
 .endif:
 
-  push rcx
-  push rbx
-  mov al, dl
-  call vga_printc
-  pop rbx
-  pop rcx
-  test rcx, rcx
-  jnz .loop
+    push rcx
+    push rbx
+    mov al, dl
+    call vga_printc
+    pop rbx
+    pop rcx
+    test rcx, rcx
+    jnz .loop
 
-  ret
+    ret
 
 ; Print a character at al.
 vga_printc:

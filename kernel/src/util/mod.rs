@@ -14,34 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 
-extern crate core;
+//! The module which contains all the common tools that are used throughout
+//! the kernel.
 
-mod tests;
+mod set_bits;
+mod static_map;
 
-/// Set bits at position `start` to position `end`, not including `end`.
-/// # Example
-/// ```
-/// let input: u8 = 0b10101100;
-/// let result = util::set_bits(input, 2, 5, 0b100);
-/// assert_eq!(result, 0b10110000);
-/// ```
-#[allow(dead_code)]
-pub fn set_bits<T>(var: T, start: u8, end: u8, val: T) -> T
-    where T: PartialOrd + From<u8>
-             + core::ops::Shr<Output=T> + core::ops::Shl<Output=T>
-             + core::ops::Not<Output=T> + core::ops::BitAnd<Output=T>
-             + core::ops::AddAssign
-{
-    let size = (core::mem::size_of::<T>() * 8) as u8;
-    assert!(end > start);
-    assert!(end <= size);
-    // Assert that val is less than 2^(end-start).
-    assert!(val <= !(T::from(0)) >> T::from(size - end + start));
-
-    // Reset bits from start to end, excluding end.
-    let mut result = var & !((!(T::from(0)) >> T::from(size - end + start))
-                             << T::from(start));
-    // Put value into the valid position.
-    result += val << T::from(start);
-    result
-}
+pub use self::set_bits::*;
+pub use self::static_map::*;

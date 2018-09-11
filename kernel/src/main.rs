@@ -24,30 +24,24 @@ mod util;
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 
+#[cfg(test)]
+#[macro_use]
+extern crate std;
+extern crate siphasher;
+
+/// Global allocator which will be used when there is a heap allocation.
 #[cfg(not(test))]
 #[global_allocator]
 static ALLOCATOR: alloc::Allocator = alloc::Allocator;
 
+/// An entry function when the kernel is booted.
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    hello();
     loop {}
 }
 
-#[cfg(not(test))]
-fn hello() {
-    let hello_str: &[u8] = b"Hello World!";
-    let vga_buffer = 0xb8000 as *mut u8;
-
-    for (i, &byte) in hello_str.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
-}
-
+/// A function that will be called when there is a panic.
 #[cfg(not(test))]
 #[panic_handler]
 #[no_mangle]

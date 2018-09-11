@@ -20,3 +20,4 @@ opt-level = 2
 incremental = false
 
 [dependencies]
+siphasher = "~0.2"
