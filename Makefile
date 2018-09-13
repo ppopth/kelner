@@ -41,6 +41,9 @@ check:
 	$(CARGO) test \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR)
+	$(CARGO) clippy \
+		--manifest-path $(MANIFESTPATH) \
+		--target-dir $(TARGETDIR)
 
 .PHONY: doc
 doc:

@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![feature(panic_handler, doc_cfg)]
+#![feature(tool_lints, panic_handler, doc_cfg)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
@@ -35,6 +35,7 @@ extern crate siphasher;
 static ALLOCATOR: alloc::Allocator = alloc::Allocator;
 
 /// An entry function when the kernel is booted.
+#[allow(clippy::empty_loop)]
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
@@ -42,6 +43,7 @@ pub extern "C" fn _start() -> ! {
 }
 
 /// A function that will be called when there is a panic.
+#[allow(clippy::empty_loop)]
 #[cfg(not(test))]
 #[panic_handler]
 #[no_mangle]

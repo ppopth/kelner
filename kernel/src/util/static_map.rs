@@ -20,7 +20,7 @@ use siphasher::sip::SipHasher;
 
 /// The static size of the hash table. The default is 0x100000.
 #[cfg(not(test))]
-const HASH_SIZE: usize = 0x100000;
+const HASH_SIZE: usize = 0x0010_0000;
 #[cfg(test)]
 const HASH_SIZE: usize = 3;
 
@@ -97,9 +97,7 @@ impl<K, V> StaticMap<K, V>
         while (idx + 1) % HASH_SIZE != pos {
             // If we find the empty slot, this means that we cannot find the
             // input key at all.
-            if let None = self.ht[idx] {
-                return None;
-            }
+            self.ht[idx]?;
             if let Some(entry) = self.ht[idx] {
                 if key == entry.key {
                     return Some(idx);
@@ -109,7 +107,7 @@ impl<K, V> StaticMap<K, V>
             idx = (idx + 1) % HASH_SIZE;
         }
 
-        return None;
+        None
     }
 
     /// Remove an entry from the map using a key.
@@ -139,7 +137,7 @@ impl<K, V> StaticMap<K, V>
         loop {
             // If it doesn't remove any item in the previous iteration,
             // the hash table is already in the correct state.
-            if let None = removed_idx {
+            if removed_idx.is_none() {
                 break;
             }
             // Remove from the hash table.
@@ -154,12 +152,8 @@ impl<K, V> StaticMap<K, V>
                         break;
                     }
                 };
-                if i > idx && (pos <= idx || pos > i) {
-                    self.ht[idx] = self.ht[i];
-                    removed_idx = Some(i);
-                    break;
-                }
-                else if i < idx && (pos > i && pos <= idx) {
+                if (i > idx && (pos <= idx || pos > i)) ||
+                   (i < idx && (pos > i && pos <= idx)) {
                     self.ht[idx] = self.ht[i];
                     removed_idx = Some(i);
                     break;
@@ -190,8 +184,8 @@ impl<K, V> StaticMap<K, V>
                 // If the slot is empty, add a new entry and increment the
                 // length variable.
                 self.ht[idx] = Some(StaticMapEntry {
-                    key: key,
-                    value: value,
+                    key,
+                    value,
                 });
                 self.len += 1;
                 return Ok(idx);

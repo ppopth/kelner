@@ -15,11 +15,12 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
+use core::mem::drop;
 use ::util::WeakRng;
 
 /// The static size of the linked list. The default is 0x100000.
 #[cfg(not(test))]
-const LIST_SIZE: usize = 0x100000;
+const LIST_SIZE: usize = 0x0010_0000;
 #[cfg(test)]
 const LIST_SIZE: usize = 3;
 
@@ -78,7 +79,7 @@ impl<T> StaticList<T>
         // If the list is not full, find an empty one.
         loop {
             let random_index = self.wrng.next() as usize % LIST_SIZE;
-            if let None = self.buf[random_index] {
+            if self.buf[random_index].is_none() {
                 return Ok(random_index);
             }
         }
@@ -127,6 +128,7 @@ impl<T> StaticList<T>
         self.len -= 1;
         // Remove the element from the list.
         self.buf[refer.index] = None;
+        drop(refer);
     }
 
     /// Get an item using a reference.
@@ -145,7 +147,7 @@ impl<T> StaticList<T>
         // If the list is not full, we can create a new list element
         // containing a parameter item.
         let mut new_element = StaticListElement {
-            item: item,
+            item,
             prev: None,
             next: None,
         };

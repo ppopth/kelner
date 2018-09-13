@@ -38,7 +38,7 @@ impl WeakRng {
 
     /// Get a new pseudo-random number.
     pub fn next(&mut self) -> u32 {
-        self.seed = (self.seed as u64 * 1103515245 + 12345) as u32;
+        self.seed = (u64::from(self.seed) * 1_103_515_245 + 12_345) as u32;
         self.seed
     }
 }
