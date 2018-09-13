@@ -18,7 +18,11 @@
 //! the kernel.
 
 mod set_bits;
+mod static_list;
 mod static_map;
+mod weak_rng;
 
 pub use self::set_bits::*;
+pub use self::static_list::*;
 pub use self::static_map::*;
+pub use self::weak_rng::*;
