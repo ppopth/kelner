@@ -26,7 +26,8 @@ const HASH_SIZE: usize = 3;
 
 /// The error type for [StaticMap](StaticMap).
 #[derive(Debug, Eq, PartialEq)]
-enum Error {
+pub enum Error {
+    NotFound,
     DuplicateKey,
     MapFull,
 }
@@ -67,7 +68,7 @@ impl<K, V> StaticMap<K, V>
 {
     /// Create an empty [StaticMap](self::StaticMap). All map entries are
     /// initially set to [None](None).
-    fn new() -> StaticMap<K, V> {
+    pub fn new() -> StaticMap<K, V> {
         StaticMap {
             len: 0,
             ht: [None; HASH_SIZE],
@@ -75,13 +76,19 @@ impl<K, V> StaticMap<K, V>
     }
 
     /// Return the number of elements in the map.
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.len
     }
 
     /// Find a key in the map. If it can find, return the value of the entry.
     /// Otherwise, return [None](None).
-    fn find(&self, key: K) -> Option<V> {
+    pub fn find(&self, key: K) -> Option<V> {
+        self.find_idx(key).map(|idx| self.ht[idx].unwrap().value)
+    }
+
+    /// Find a key in the map. If it can find, return the position in the
+    /// hash table. Otherwise, return [None](None).
+    pub fn find_idx(&self, key: K) -> Option<usize> {
         // Valid position.
         let pos = key.hash() as usize % HASH_SIZE;
         let mut idx = pos;
@@ -95,7 +102,7 @@ impl<K, V> StaticMap<K, V>
             }
             if let Some(entry) = self.ht[idx] {
                 if key == entry.key {
-                    return Some(entry.value);
+                    return Some(idx);
                 }
             }
             // Go to the next hash entry.
@@ -105,9 +112,68 @@ impl<K, V> StaticMap<K, V>
         return None;
     }
 
+    /// Remove an entry from the map using a key.
+    pub fn remove(&mut self, key: K) -> Result<V, Error> {
+        let idx = match self.find_idx(key) {
+            Some(v) => v,
+            None => return Err(Error::NotFound),
+        };
+        self.remove_idx(idx)
+    }
+
+    /// Remove an entry from the map using an index in the hash table.
+    pub fn remove_idx(&mut self, idx: usize) -> Result<V, Error> {
+        // Keep the value.
+        let value = match self.ht[idx] {
+            Some(e) => e.value,
+            None => return Err(Error::NotFound),
+        };
+
+        // The algorithm here will iterate through each entry in the hash
+        // table until it finds either an empty entry or an entry with hash
+        // value not in a range it has traversed. If it's the former case,
+        // it will just terminate. If it's the latter case, it will move the
+        // entry from that position `pos` to the position at `idx` and it wil
+        // treat it as if the entry at `pos` is removed.
+        let mut removed_idx = Some(idx);
+        loop {
+            // If it doesn't remove any item in the previous iteration,
+            // the hash table is already in the correct state.
+            if let None = removed_idx {
+                break;
+            }
+            // Remove from the hash table.
+            self.ht[removed_idx.unwrap()] = None;
+            let mut i = (removed_idx.unwrap() + 1) % HASH_SIZE;
+
+            loop {
+                let pos = match self.ht[i] {
+                    Some(ref entry) => entry.key.hash() as usize % HASH_SIZE,
+                    None => {
+                        removed_idx = None;
+                        break;
+                    }
+                };
+                if i > idx && (pos <= idx || pos > i) {
+                    self.ht[idx] = self.ht[i];
+                    removed_idx = Some(i);
+                    break;
+                }
+                else if i < idx && (pos > i && pos <= idx) {
+                    self.ht[idx] = self.ht[i];
+                    removed_idx = Some(i);
+                    break;
+                }
+
+                i = (i + 1) % HASH_SIZE;
+            }
+        }
+        Ok(value)
+    }
+
     /// Insert a key into the map with a value. If it can insert to the map,
     /// return the position in the hash table. Otherwise, return [None](None).
-    fn insert(&mut self, key: K, value: V) -> Result<usize, Error> {
+    pub fn insert(&mut self, key: K, value: V) -> Result<usize, Error> {
         // Valid position.
         let pos = key.hash() as usize % HASH_SIZE;
         let mut idx = pos;
@@ -142,6 +208,41 @@ impl<K, V> StaticMap<K, V>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn find_return_correct_value() {
+        let mut map: StaticMap<u64, u64> = StaticMap::new();
+        assert!(map.insert(10, 9).is_ok());
+        assert!(map.insert(20, 99).is_ok());
+        assert!(map.insert(30, 999).is_ok());
+
+        assert_eq!(map.find(10).unwrap(), 9);
+        assert_eq!(map.find(20).unwrap(), 99);
+        assert_eq!(map.find(30).unwrap(), 999);
+    }
+
+    #[test]
+    fn remove_non_existing_entry() {
+        let mut map: StaticMap<u64, u64> = StaticMap::new();
+        assert!(map.insert(0, 0).is_ok());
+        assert!(map.insert(1, 0).is_ok());
+
+        // This one should return error, because the entry doesn't exist.
+        assert_eq!(map.remove(2).unwrap_err(), Error::NotFound);
+    }
+
+    #[test]
+    fn remove_entries_correctly() {
+        let mut map: StaticMap<u64, u64> = StaticMap::new();
+        assert!(map.insert(0, 10).is_ok());
+        assert!(map.insert(1, 20).is_ok());
+        assert!(map.insert(2, 30).is_ok());
+        assert_eq!(map.remove(1).unwrap(), 20);
+        assert!(map.insert(3, 40).is_ok());
+        assert_eq!(map.remove(2).unwrap(), 30);
+        assert_eq!(map.remove(3).unwrap(), 40);
+        assert_eq!(map.remove(0).unwrap(), 10);
+    }
 
     #[test]
     fn insert_when_full() {
