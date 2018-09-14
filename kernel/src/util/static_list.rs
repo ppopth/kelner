@@ -41,7 +41,13 @@ struct StaticListElement<T> {
 /// A reference used by external users to reference items in the list.
 #[derive(Debug, Eq, PartialEq)]
 pub struct StaticListRef<T> {
+    // The index to which this reference is referring to.
     index: usize,
+    // The address of the list to which this reference belongs to. At the first
+    // glance, you may think that this reference may refer to two different
+    // lists, if you allocate a new list located at the same address of the
+    // freed list. In fact, that can't happen, if you allocate the list as
+    // a static list, i.e. it isn't allocated in the heap or the stack.
     list: *const StaticList<T>,
 }
 
