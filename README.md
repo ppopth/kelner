@@ -1,4 +1,4 @@
-# [Kelner](https://github.com/haxxpop/kelner)
+# Kelner
 
 Kelner is a safe, portable, simple microkernel written purely in Rust.
 
@@ -21,7 +21,15 @@ sudo apt-get install curl nasm qemu-system-x86 build-essential
 curl https://sh.rustup.rs -sSf | sh
 source $HOME/.cargo/env
 ```
-Compile the kernel after this step you will get many files in `target` which contains built files from Rust Cargo and `bulid` which contains some kernel image files to be run in Qemu.
+Auto-generate the `configure` file using Kelner pre-defined configurations.
+```
+./autogen.sh
+```
+Generate building files using user-defined configurations, if any.
+```
+./configure
+```
+Compile the kernel. After this step, you will get many files in `target`, which contains built files from Rust Cargo, and `build`, which contains some kernel image files to be run in Qemu.
 ```
 make
 ```

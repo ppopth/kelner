@@ -1,4 +1,11 @@
-build
-target
-kelner.img
-kelner.vmdk
+/build
+/target
+/Makefile
+/kelner.img
+/kelner.vmdk
+/autom4te.cache
+/config.log
+/config.status
+/configure
+/kernel/layout.ld
+/kernel/Cargo.toml

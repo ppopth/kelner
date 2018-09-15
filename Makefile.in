@@ -17,6 +17,8 @@ ARCH=x86_64
 CARGO=cargo
 RUSTFLAGS=-Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
 MANIFESTPATH=kernel/Cargo.toml
+CLEANFILES=build target
+DISTCLEANFILES=@KELNER_CONFIG_FILES@ config.log config.status
 TARGETDIR=target
 
 .PHONY: all
@@ -24,7 +26,11 @@ all: build/disk
 
 .PHONY: clean
 clean:
-	rm -rf build target
+	rm -rf $(CLEANFILES)
+
+.PHONY: distclean
+distclean:
+	rm -rf $(CLEANFILES) $(DISTCLEANFILES)
 
 .PHONY: qemu
 qemu: build/disk
