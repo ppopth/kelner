@@ -1,5 +1,7 @@
 # Kelner
 
+[![Build Status](https://travis-ci.org/haxxpop/kelner.svg?branch=master)](https://travis-ci.org/haxxpop/kelner)
+
 Kelner is a safe, portable, simple microkernel written purely in Rust.
 
 * **Why Rust:** Kelner decided to use Rust because Rust is resistant to many kinds of system-level attacks such as stack-overflow, use-after-free. In additions, Rust is null-safe. It has nullable types and non-nullable types separately, while, in some other popular languages, their types are all nullable. Rust has no data race. We cannot have multiple pointers referencing and modifying the same data. Only one can do it! Using these features, we can reduce bugs in a very complicated kernel without using some sanitizer, like ASAN or LSAN.
