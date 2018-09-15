@@ -15,11 +15,13 @@
 # along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 ARCH = x86_64
 CARGO = cargo
+NASMFLAGS = -f bin
 RUSTFLAGS = -Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
 MANIFESTPATH = kernel/Cargo.toml
 CLEANFILES = build target
 DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
 TARGETDIR = target
+@KELNER_FATAL_WARNINGS@ NASMFLAGS += -Werror
 @KELNER_FATAL_WARNINGS@ RUSTFLAGS += -D warnings
 
 .PHONY: all
@@ -66,7 +68,7 @@ privdoc:
 
 build/disk: build/kernel bootloader/*
 	mkdir -p build
-	nasm -f bin -o $@ \
+	nasm $(NASMFLAGS) -o $@ \
 		-D KERNEL_FILE=../$< -ibootloader/ \
 		-D ENTRY_POINT=$(shell objdump -f target/release/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \
@@ -76,7 +78,7 @@ build/disk: build/kernel bootloader/*
 
 build/diskdev: build/kerneldev bootloader/*
 	mkdir -p build
-	nasm -f bin -o $@ \
+	nasm $(NASMFLAGS) -o $@ \
 		-D KERNEL_FILE=../$< -ibootloader/ \
 		-D ENTRY_POINT=$(shell objdump -f target/debug/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \
