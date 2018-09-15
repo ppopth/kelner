@@ -16,6 +16,7 @@
 #![cfg_attr(not(test), allow(dead_code))]
 
 use core::hash::Hasher;
+use core::{mem, ptr};
 use siphasher::sip::SipHasher;
 
 /// The static size of the hash table. The default is 0x100000.
@@ -46,7 +47,6 @@ impl Hash for u64 {
 }
 
 /// An entry in [StaticMap](StaticMap).
-#[derive(Copy, Clone)]
 struct StaticMapEntry<K, V> {
     key: K,
     value: V,
@@ -64,14 +64,22 @@ pub struct StaticMap<K, V>
 }
 
 impl<K, V> StaticMap<K, V>
-    where K: Hash + Copy + Eq, V: Copy
+    where K: Hash + Copy + Eq
 {
     /// Create an empty [StaticMap](self::StaticMap). All map entries are
     /// initially set to [None](None).
     pub fn new() -> StaticMap<K, V> {
+        let ht = unsafe {
+            let mut array: [Option<StaticMapEntry<K, V>>; HASH_SIZE] =
+                                                        mem::uninitialized();
+            for elem in array.iter_mut() {
+                ptr::write(elem, None);
+            }
+            array
+        };
         StaticMap {
             len: 0,
-            ht: [None; HASH_SIZE],
+            ht,
         }
     }
 
@@ -82,8 +90,8 @@ impl<K, V> StaticMap<K, V>
 
     /// Find a key in the map. If it can find, return the value of the entry.
     /// Otherwise, return [None](None).
-    pub fn find(&self, key: K) -> Option<V> {
-        self.find_idx(key).map(|idx| self.ht[idx].unwrap().value)
+    pub fn find(&self, key: K) -> Option<&V> {
+        self.find_idx(key).map(|idx| &self.ht[idx].as_ref().unwrap().value)
     }
 
     /// Find a key in the map. If it can find, return the position in the
@@ -97,8 +105,8 @@ impl<K, V> StaticMap<K, V>
         while (idx + 1) % HASH_SIZE != pos {
             // If we find the empty slot, this means that we cannot find the
             // input key at all.
-            self.ht[idx]?;
-            if let Some(entry) = self.ht[idx] {
+            self.ht[idx].as_ref()?;
+            if let Some(entry) = self.ht[idx].as_ref() {
                 if key == entry.key {
                     return Some(idx);
                 }
@@ -122,7 +130,7 @@ impl<K, V> StaticMap<K, V>
     /// Remove an entry from the map using an index in the hash table.
     pub fn remove_idx(&mut self, idx: usize) -> Result<V, Error> {
         // Keep the value.
-        let value = match self.ht[idx] {
+        let value = match self.ht[idx].take() {
             Some(e) => e.value,
             None => return Err(Error::NotFound),
         };
@@ -154,7 +162,7 @@ impl<K, V> StaticMap<K, V>
                 };
                 if (i > idx && (pos <= idx || pos > i)) ||
                    (i < idx && (pos > i && pos <= idx)) {
-                    self.ht[idx] = self.ht[i];
+                    self.ht[idx] = self.ht[i].take();
                     removed_idx = Some(i);
                     break;
                 }
@@ -174,13 +182,7 @@ impl<K, V> StaticMap<K, V>
 
         // Loop through entry hash table to find an empty slot.
         loop {
-            if let Some(entry) = self.ht[idx] {
-                // If the slot is not empty and is equal to the input key,
-                // this means the key is already in the map. Return error.
-                if entry.key == key {
-                    return Err(Error::DuplicateKey);
-                }
-            } else {
+            if self.ht[idx].is_none() {
                 // If the slot is empty, add a new entry and increment the
                 // length variable.
                 self.ht[idx] = Some(StaticMapEntry {
@@ -190,6 +192,13 @@ impl<K, V> StaticMap<K, V>
                 self.len += 1;
                 return Ok(idx);
             }
+
+            // If the slot is not empty and is equal to the input key,
+            // this means the key is already in the map. Return error.
+            if self.ht[idx].as_ref().unwrap().key == key {
+                return Err(Error::DuplicateKey);
+            }
+
             idx = (idx + 1) % HASH_SIZE;
             if idx == pos {
                 break;
@@ -210,9 +219,9 @@ mod tests {
         assert!(map.insert(20, 99).is_ok());
         assert!(map.insert(30, 999).is_ok());
 
-        assert_eq!(map.find(10).unwrap(), 9);
-        assert_eq!(map.find(20).unwrap(), 99);
-        assert_eq!(map.find(30).unwrap(), 999);
+        assert_eq!(*map.find(10).unwrap(), 9);
+        assert_eq!(*map.find(20).unwrap(), 99);
+        assert_eq!(*map.find(30).unwrap(), 999);
     }
 
     #[test]
