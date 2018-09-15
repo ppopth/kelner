@@ -15,7 +15,7 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
-use core::mem::drop;
+use core::{mem, ptr};
 use ::util::WeakRng;
 
 /// The static size of the linked list. The default is 0x100000.
@@ -31,7 +31,6 @@ pub enum Error {
 }
 
 /// An entry in [StaticList](StaticList).
-#[derive(Copy, Clone)]
 struct StaticListElement<T> {
     item: T,
     prev: Option<usize>,
@@ -66,7 +65,6 @@ pub struct StaticList<T> {
 }
 
 impl<T> StaticList<T>
-    where T: Copy
 {
     /// Make sure that the ref is valid for this list.
     fn assert_ref(&self, refer: &StaticListRef<T>) {
@@ -93,8 +91,16 @@ impl<T> StaticList<T>
 
     /// Create an empty [StaticList](self::StaticList).
     pub fn new() -> StaticList<T> {
+        let buf = unsafe {
+            let mut array: [Option<StaticListElement<T>>; LIST_SIZE] =
+                                                        mem::uninitialized();
+            for elem in array.iter_mut() {
+                ptr::write(elem, None);
+            }
+            array
+        };
         StaticList {
-            buf: [None; LIST_SIZE],
+            buf,
             wrng: WeakRng::new(),
             head: None,
             len: 0,
@@ -134,14 +140,14 @@ impl<T> StaticList<T>
         self.len -= 1;
         // Remove the element from the list.
         self.buf[refer.index] = None;
-        drop(refer);
+        mem::drop(refer);
     }
 
     /// Get an item using a reference.
-    pub fn get(&self, refer: &StaticListRef<T>) -> T {
+    pub fn get(&self, refer: &StaticListRef<T>) -> &T {
         self.assert_ref(refer);
 
-        self.buf[refer.index].unwrap().item
+        &self.buf[refer.index].as_ref().unwrap().item
     }
 
     /// Pust a new element in front of the list.
@@ -189,12 +195,12 @@ mod tests {
         let e1 = list.push(10).unwrap();
         let e2 = list.push(20).unwrap();
         let e3 = list.push(30).unwrap();
-        assert_eq!(list.get(&e3), 30);
-        assert_eq!(list.get(&e2), 20);
-        assert_eq!(list.get(&e1), 10);
+        assert_eq!(*list.get(&e3), 30);
+        assert_eq!(*list.get(&e2), 20);
+        assert_eq!(*list.get(&e1), 10);
         list.remove(e3);
-        assert_eq!(list.get(&e2), 20);
-        assert_eq!(list.get(&e1), 10);
+        assert_eq!(*list.get(&e2), 20);
+        assert_eq!(*list.get(&e1), 10);
     }
 
     #[test]
