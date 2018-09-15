@@ -1,0 +1,27 @@
+language: rust
+
+rust:
+  - stable
+
+env:
+  # Test building release
+  - TARGET=build/disk
+  # Test building dev
+  - TARGET=build/diskdev
+  # Run tests
+  - TARGET=check
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - nasm
+
+install:
+  - rustup component add clippy-preview
+
+script:
+  - ./autogen.sh
+  - CONFIGURE_FLAGS=--enable-fatal-warnings
+  - ./configure $CONFIGURE_FLAGS
+  - make $TARGET
