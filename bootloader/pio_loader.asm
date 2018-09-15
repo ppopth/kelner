@@ -17,22 +17,17 @@ bits 64
 
 ; We will use LBA48 PIO mode here.
 pio_load:
-    ; This is an initial loading address. If you want to change this value,
-    ; do not forget to change it at `kernel/layout.ld` as well because
-    ; currently I do not know how to refactor it.
-.initial_load_address:  equ 0x100000
-
     ; Print payload_start
     mov si, pio_loader_msg.payload_start
     call vga_print
-    mov rax, .initial_load_address
+    mov rax, config.loading_addresss
     call vga_printa
     call vga_printnl
 
     ; Print payload_end
     mov si, pio_loader_msg.payload_end
     call vga_print
-    mov rax, .initial_load_address + (payload_end - payload_start)
+    mov rax, config.loading_addresss + (payload_end - payload_start)
     call vga_printa
     call vga_printnl
 
@@ -45,7 +40,7 @@ pio_load:
 
     ; We need to add BSS_SIZE here because it isn't included in the
     ; payload yet.
-    mov rax, .initial_load_address + (BSS_SIZE + payload_end - payload_start)
+    mov rax, config.loading_addresss + (BSS_SIZE + payload_end - payload_start)
     ; The range between 0x100000 and 0x8000000 is for code and data, this
     ; means that if the payload_end is beyond 0x8000000, it will go out
     ; of the range. We need to throw an error here.
@@ -53,7 +48,7 @@ pio_load:
     cmp rax, rbx
     ja .out_of_range
 
-    mov rax, .initial_load_address
+    mov rax, config.loading_addresss
     mov [.load_address], rax
     ; 512 must already divide the size of the payload because we
     ; already pad it with zeroes.

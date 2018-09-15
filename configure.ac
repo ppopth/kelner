@@ -32,6 +32,7 @@ AC_SUBST(KELNER_LOADING_ADDRESS)
 
 AC_CONFIG_FILES([
   Makefile
+  bootloader/config.asm
   kernel/layout.ld
   kernel/Cargo.toml
 ])

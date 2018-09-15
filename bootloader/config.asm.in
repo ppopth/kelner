@@ -13,25 +13,8 @@
 ;
 ; You should have received a copy of the GNU General Public License
 ; along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-org 0x7c00
-bits 16
 
-%include "config.asm"
-%include "bootsector.asm"
-%include "second_stage.asm"
-
-; We already entered long mode. We need to use 64bit instructions instead.
-bits 64
-
-; Pad to make payload_start aligned with the sector
-align 512
-payload_start:
-
-%defstr KERNEL_STR %[KERNEL_FILE]
-incbin KERNEL_STR
-hlt
-
-; Pad to make payload_end aligned with the sector
-align 512
-payload_end:
-
+; This file must contain only equ configuration paramters. It must not contain
+; any code or data.
+config:
+.loading_addresss:  equ @KELNER_LOADING_ADDRESS@
