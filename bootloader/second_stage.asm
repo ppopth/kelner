@@ -43,11 +43,11 @@ second_stage_start:
 second_stage_msg:
 .in_long_mode:  db "We are in long mode already :)", 0
 
-%include "cpu.s"
-%include "a20.s"
-%include "paging.s"
-%include "gdt.s"
-%include "pio_loader.s"
+%include "cpu.asm"
+%include "a20.asm"
+%include "paging.asm"
+%include "gdt.asm"
+%include "pio_loader.asm"
 
 ; We already entered long mode. We need to use 64bit instructions instead.
 bits 64
@@ -66,7 +66,7 @@ long_mode_entry:
     call pio_load
     jmp ENTRY_POINT
 
-%include "vga_print.s"
+%include "vga_print.asm"
 
 ; Pad to make payload_start aligned with the sector
 align 512

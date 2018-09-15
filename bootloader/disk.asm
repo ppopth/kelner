@@ -16,8 +16,8 @@
 org 0x7c00
 bits 16
 
-%include "bootsector.s"
-%include "second_stage.s"
+%include "bootsector.asm"
+%include "second_stage.asm"
 
 ; We already entered long mode. We need to use 64bit instructions instead.
 bits 64

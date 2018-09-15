@@ -71,7 +71,7 @@ build/disk: build/kernel bootloader/*
 			grep "start address" | cut -d ' ' -f 3) \
 		-D BSS_SIZE=$(shell size -x target/release/kernel | tr -s ' ' | \
 			cut -d ' ' -f 3 | tail -n 1) \
-		bootloader/disk.s
+		bootloader/disk.asm
 
 build/diskdev: build/kerneldev bootloader/*
 	mkdir -p build
@@ -81,7 +81,7 @@ build/diskdev: build/kerneldev bootloader/*
 			grep "start address" | cut -d ' ' -f 3) \
 		-D BSS_SIZE=$(shell size -x target/debug/kernel | tr -s ' ' | \
 			cut -d ' ' -f 3 | tail -n 1) \
-		bootloader/disk.s
+		bootloader/disk.asm
 
 build/kernel: $(shell find kernel -type f)
 	mkdir -p build

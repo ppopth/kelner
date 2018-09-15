@@ -54,8 +54,8 @@ error:
     hlt
     jmp .halt
 
-%include "bios_print.s"
-%include "bios_loader.s"
+%include "bios_print.asm"
+%include "bios_loader.asm"
 
 data:
 .disk_number:    db 0
