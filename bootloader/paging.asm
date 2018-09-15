@@ -25,7 +25,7 @@ align 512
 disable_paging:
     ; Clear the PG-bit, which is bit 31.
     mov eax, cr0
-    and eax, ~ (1 << 31)
+    and eax, 0x7fffffff
     mov cr0, eax
     ret
 
