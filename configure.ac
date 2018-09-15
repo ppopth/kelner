@@ -37,6 +37,14 @@ AC_CONFIG_FILES([
   kernel/Cargo.toml
 ])
 
+if test "x$enable_fatal_warnings" = "xyes"; then
+  KELNER_FATAL_WARNINGS=
+else
+  # The sharp is used to comment the code in Makefile
+  KELNER_FATAL_WARNINGS=#
+fi
+AC_SUBST(KELNER_FATAL_WARNINGS)
+
 KELNER_CONFIG_FILES=$ac_config_files
 AC_SUBST(KELNER_CONFIG_FILES)
 
