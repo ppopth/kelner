@@ -29,7 +29,7 @@ payload_start:
 
 %defstr KERNEL_STR %[KERNEL_FILE]
 incbin KERNEL_STR
-hlt
+bss_start:
 
 ; Pad to make payload_end aligned with the sector
 align 512

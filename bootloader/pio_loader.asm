@@ -166,6 +166,7 @@ pio_load:
 
     ; Clear BSS section.
     xor rax, rax
+    mov rdi, config.loading_addresss + bss_start - payload_start
     mov rcx, BSS_SIZE
     rep stosb
 
