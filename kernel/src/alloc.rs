@@ -19,6 +19,7 @@
 //! to allocate kernel memory.
 
 use core::alloc::{GlobalAlloc, Layout};
+use core::num::{NonZeroU64, NonZeroUsize};
 use core::{ptr, mem};
 use ::config;
 use ::util::{StaticMap, StaticList, StaticListRef};
@@ -32,7 +33,7 @@ static mut CONTEXT: Option<AllocationContext> = None;
 /// The value entry in the mapping of allocated addresses.
 struct MapEntry {
     // The bit length of the allocation size. Maximum is SLAB_SIZE_LOG.
-    len: usize,
+    len: NonZeroUsize,
     // The reference to an entry in the cache.
     cache_entry: StaticListRef<CacheEntry>,
 }
@@ -43,7 +44,7 @@ struct CacheEntry {
     // data. Since this is an allocation module for the kernel memory and we
     // have an identity mapping between virtual addresses and physical
     // addresses, this address will always be the same as the virtual address.
-    phy_addr: u64,
+    phy_addr: NonZeroU64,
 }
 
 /// This is a cache for keeping free objects and allocated objects. There will
@@ -69,7 +70,7 @@ impl Cache {
 /// kernel memory allocation.
 pub struct AllocationContext {
     // This is a mapping between the address and the cache entry.
-    addr_map: StaticMap<u64, MapEntry>,
+    addr_map: StaticMap<NonZeroU64, MapEntry>,
     // List of caches.
     caches: [Cache; SLAB_SIZE_LOG],
     // The next slap address that we can use. Note that this variable will

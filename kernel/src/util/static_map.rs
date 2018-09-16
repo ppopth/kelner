@@ -15,6 +15,7 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
+use core::num::NonZeroU64;
 use core::hash::Hasher;
 use core::{mem, ptr};
 use siphasher::sip::SipHasher;
@@ -34,14 +35,22 @@ pub enum Error {
 }
 
 /// A trait which ensures that the implementor can be hashed to [u64](u64).
-pub trait Hash {
+pub trait HashU64 {
     fn hash(&self) -> u64;
 }
 
-impl Hash for u64 {
+impl HashU64 for u64 {
     fn hash(&self) -> u64 {
         let mut hasher = SipHasher::new();
         hasher.write_u64(*self);
+        hasher.finish()
+    }
+}
+
+impl HashU64 for NonZeroU64 {
+    fn hash(&self) -> u64 {
+        let mut hasher = SipHasher::new();
+        hasher.write_u64(self.get());
         hasher.finish()
     }
 }
@@ -64,7 +73,7 @@ pub struct StaticMap<K, V>
 }
 
 impl<K, V> StaticMap<K, V>
-    where K: Hash + Copy + Eq
+    where K: HashU64 + Copy + Eq
 {
     /// Create an empty [StaticMap](self::StaticMap). All map entries are
     /// initially set to [None](None).

@@ -15,6 +15,7 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
+use core::ptr::NonNull;
 use core::{mem, ptr};
 use ::util::WeakRng;
 
@@ -47,7 +48,7 @@ pub struct StaticListRef<T> {
     // lists, if you allocate a new list located at the same address of the
     // freed list. In fact, that can't happen, if you allocate the list as
     // a static list, i.e. it isn't allocated in the heap or the stack.
-    list: *const StaticList<T>,
+    list: NonNull<StaticList<T>>,
 }
 
 /// The structure that is used when you don't want to allocate memory in
@@ -68,7 +69,7 @@ impl<T> StaticList<T>
 {
     /// Make sure that the ref is valid for this list.
     fn assert_ref(&self, refer: &StaticListRef<T>) {
-        if refer.list as usize != self as *const _ as usize {
+        if refer.list.as_ptr() as usize != self as *const _ as usize {
             panic!("invalid StaticListRef<T> instance");
         }
     }
@@ -180,7 +181,7 @@ impl<T> StaticList<T>
 
         Ok(StaticListRef {
             index: new_slot_index,
-            list: self as *const _,
+            list: NonNull::new(self).unwrap(),
         })
     }
 }
