@@ -17,6 +17,9 @@
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
+// Lints that are allowed.
+#![allow(clippy::explicit_iter_loop)]
+
 #[cfg(not(test))]
 mod alloc;
 mod config;

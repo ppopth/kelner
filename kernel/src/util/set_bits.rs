@@ -44,8 +44,8 @@ mod tests {
 
     #[test]
     fn valid_input_u8() {
-        let input: u8 = 0b11111111;
-        assert_eq!(set_bits(input, 2, 5, 0b010), 0b11101011);
+        let input: u8 = 0b1111_1111;
+        assert_eq!(set_bits(input, 2, 5, 0b010), 0b1110_1011);
     }
 
     #[test]

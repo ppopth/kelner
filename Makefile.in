@@ -17,14 +17,14 @@ ARCH = x86_64
 CARGO = cargo
 NASMFLAGS = -f bin
 RUSTFLAGS = -Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
-CLIPPYFLAGS =
+CLIPPYFLAGS = --all-features --all-targets
 MANIFESTPATH = kernel/Cargo.toml
 CLEANFILES = build target
 DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
 TARGETDIR = target
 @KELNER_FATAL_WARNINGS@ NASMFLAGS += -Werror
 @KELNER_FATAL_WARNINGS@ RUSTFLAGS += -D warnings
-@KELNER_FATAL_WARNINGS@ CLIPPYFLAGS += -D warnings
+@KELNER_FATAL_WARNINGS@ CLIPPYFLAGS += -- -D warnings
 
 .PHONY: all
 all: build/disk
@@ -55,7 +55,7 @@ check:
 	$(CARGO) clippy \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR) \
-		-- $(CLIPPYFLAGS)
+		$(CLIPPYFLAGS)
 
 .PHONY: doc
 doc:
