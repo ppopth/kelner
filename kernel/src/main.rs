@@ -32,6 +32,7 @@ use core::panic::PanicInfo;
 #[cfg(test)]
 #[macro_use]
 extern crate std;
+extern crate rlibc;
 extern crate siphasher;
 
 /// Global allocator which will be used when there is a heap allocation.

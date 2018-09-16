@@ -20,7 +20,7 @@ use ::util::WeakRng;
 
 /// The static size of the linked list. The default is 0x100000.
 #[cfg(not(test))]
-const LIST_SIZE: usize = 0x0010_0000;
+const LIST_SIZE: usize = 0x0001_0000;
 #[cfg(test)]
 const LIST_SIZE: usize = 3;
 

@@ -2,8 +2,14 @@
 name = "kernel"
 version = "0.0.1"
 dependencies = [
+ "rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "siphasher 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "rlibc"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "siphasher"
@@ -11,4 +17,5 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
+"checksum rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"
 "checksum siphasher 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "0b8de496cf83d4ed58b6be86c3a275b8602f6ffe98d3024a869e124147a9a3ac"
