@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 
-//! The module which contains all the common tools that are used throughout
-//! the kernel.
+//! Utility module. This module contains all the common tools that are
+//! used throughout the kernel.
 
 mod set_bits;
 mod static_list;

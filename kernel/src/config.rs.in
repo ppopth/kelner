@@ -16,6 +16,9 @@
 #![allow(dead_code)]
 #![allow(clippy::unreadable_literal)]
 
+//! Configuration module. This module contians all configuration parameters
+//! used throughout Kelner.
+
 pub const KERNEL_HEAP_START: u64 = @KELNER_KERNEL_HEAP_START@;
 pub const KERNEL_HEAP_END: u64 = @KELNER_KERNEL_HEAP_END@;
 pub const PAGE_SIZE: usize = @KELNER_PAGE_SIZE@;
