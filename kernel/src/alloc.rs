@@ -21,8 +21,8 @@
 use core::alloc::{GlobalAlloc, Layout};
 use core::num::{NonZeroU64, NonZeroUsize};
 use core::{ptr, mem};
+use ::collections::{StaticMap, StaticList, StaticListRef};
 use ::config;
-use ::util::{StaticMap, StaticList, StaticListRef};
 
 /// The maximum slab size.
 const SLAB_SIZE: usize = config::PAGE_SIZE;

@@ -22,6 +22,7 @@
 
 #[cfg(not(test))]
 mod alloc;
+mod collections;
 mod config;
 mod util;
 mod debug;

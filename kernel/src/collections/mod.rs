@@ -14,13 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 
-//! Utility module. This module contains all the common tools that are
+//! Collections module. This module contains all the collections that are
 //! used throughout the kernel.
 
-mod set_bits;
-mod weak_rng;
-mod unsigned;
+mod static_list;
+mod static_map;
 
-pub use self::set_bits::*;
-pub use self::weak_rng::*;
-pub use self::unsigned::*;
+pub use self::static_list::*;
+pub use self::static_map::*;
