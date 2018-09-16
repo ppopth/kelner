@@ -19,6 +19,7 @@
 
 #[cfg(not(test))]
 mod alloc;
+mod config;
 mod util;
 
 #[cfg(not(test))]

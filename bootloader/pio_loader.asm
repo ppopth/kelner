@@ -44,7 +44,7 @@ pio_load:
     ; The range between 0x100000 and 0x8000000 is for code and data, this
     ; means that if the payload_end is beyond 0x8000000, it will go out
     ; of the range. We need to throw an error here.
-    mov rbx, 0x8000000
+    mov rbx, config.kernel_heap_start
     cmp rax, rbx
     ja .out_of_range
 

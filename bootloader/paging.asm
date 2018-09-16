@@ -53,7 +53,7 @@ setup_paging:
     mov ecx, 0
 .loop:
     ; The page size is 2MB.
-    mov eax, 0x200000
+    mov eax, config.page_size
     mul ecx
     ; Bit 7 is for a huge page.
     or eax, (1 << 7) | 0b11

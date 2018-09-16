@@ -10,3 +10,4 @@
 /bootloader/config.asm
 /kernel/layout.ld
 /kernel/Cargo.toml
+/kernel/src/config.rs

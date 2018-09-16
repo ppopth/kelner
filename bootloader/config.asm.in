@@ -17,4 +17,7 @@
 ; This file must contain only equ configuration paramters. It must not contain
 ; any code or data.
 config:
-.loading_addresss:  equ @KELNER_LOADING_ADDRESS@
+.loading_addresss:   equ @KELNER_LOADING_ADDRESS@
+.kernel_heap_start:  equ @KELNER_KERNEL_HEAP_START@
+.kernel_stack_end:   equ @KELNER_KERNEL_STACK_END@
+.page_size:          equ @KELNER_PAGE_SIZE@

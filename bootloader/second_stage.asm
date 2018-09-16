@@ -64,6 +64,10 @@ long_mode_entry:
     call vga_println
 
     call pio_load
+
+    ; Set the stack pointer to the ending address of the kernel stack section.
+    mov rsp, config.kernel_stack_end
+
     jmp ENTRY_POINT
 
 %include "vga_print.asm"

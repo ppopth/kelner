@@ -30,11 +30,34 @@ AC_SUBST(KELNER_AUTHOR_EMAIL)
 KELNER_LOADING_ADDRESS="0x100000"
 AC_SUBST(KELNER_LOADING_ADDRESS)
 
+KELNER_KERNEL_HEAP_START="0x8000000"
+AC_SUBST(KELNER_KERNEL_HEAP_START)
+
+KELNER_KERNEL_HEAP_END="0x10000000"
+AC_SUBST(KELNER_KERNEL_HEAP_END)
+
+KELNER_KERNEL_STACK_START="0x10000000"
+AC_SUBST(KELNER_KERNEL_STACK_START)
+
+KELNER_KERNEL_STACK_END="0x20000000"
+AC_SUBST(KELNER_KERNEL_STACK_END)
+
+dnl Other parameters may be changed, but this one must not! It's not easy
+dnl to change a page size arbitrarily.
+KELNER_PAGE_SIZE="0x200000"
+AC_SUBST(KELNER_PAGE_SIZE)
+
+dnl Other parameters may be changed, but this one must not! It's not easy
+dnl to change a page size arbitrarily.
+KELNER_PAGE_SIZE_LOG="21"
+AC_SUBST(KELNER_PAGE_SIZE_LOG)
+
 AC_CONFIG_FILES([
   Makefile
   bootloader/config.asm
   kernel/layout.ld
   kernel/Cargo.toml
+  kernel/src/config.rs
 ])
 
 if test "x$enable_fatal_warnings" = "xyes"; then
