@@ -21,6 +21,7 @@
 mod alloc;
 mod config;
 mod util;
+mod debug;
 
 #[cfg(not(test))]
 use core::panic::PanicInfo;
