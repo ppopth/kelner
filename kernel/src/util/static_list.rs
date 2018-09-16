@@ -15,6 +15,7 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
+use core::num::{NonZeroUsize};
 use core::ptr::NonNull;
 use core::{mem, ptr};
 use ::util::WeakRng;
@@ -33,16 +34,26 @@ pub enum Error {
 
 /// An entry in [StaticList](StaticList).
 struct StaticListElement<T> {
+    // The item that this element contains.
     item: T,
-    prev: Option<usize>,
-    next: Option<usize>,
+    // The link to the previous element. Please do not forget to decrease this
+    // by one first before using it to access the list.
+    prev: Option<NonZeroUsize>,
+    // The link to the next element. Please do not forget to decrease this
+    // by one first before using it to access the list.
+    next: Option<NonZeroUsize>,
 }
 
 /// A reference used by external users to reference items in the list.
+// You can see that the index here is NonZeroUsize, because, if so,
+// the size of StaticListElement can be easily optimized. So, when you
+// want to use this index to access the list, you must subtract it by one
+// first.
 #[derive(Debug, Eq, PartialEq)]
 pub struct StaticListRef<T> {
-    // The index to which this reference is referring to.
-    index: usize,
+    // The index to which this reference is referring to. Please do not forget
+    // to decrease this by one first before using it to access the list.
+    index: NonZeroUsize,
     // The address of the list to which this reference belongs to. At the first
     // glance, you may think that this reference may refer to two different
     // lists, if you allocate a new list located at the same address of the
@@ -59,8 +70,9 @@ pub struct StaticList<T> {
     buf: [Option<StaticListElement<T>>; LIST_SIZE],
     // The number generator for finding an empty slot.
     wrng: WeakRng,
-    // The head index of the list.
-    head: Option<usize>,
+    // The head index of the list. Please do not forget to decrease this
+    // by one first before using it to access the list.
+    head: Option<NonZeroUsize>,
     // The length of the list.
     len: usize,
 }
@@ -118,7 +130,7 @@ impl<T> StaticList<T>
         self.assert_ref(&refer);
 
         let (elem_prev, elem_next) = {
-            let element = self.buf[refer.index].as_ref().unwrap();
+            let element = self.buf[refer.index.get()-1].as_ref().unwrap();
             if let Some(v) = self.head {
                 // This means that we are trying to remove the head of
                 // the list.
@@ -131,16 +143,16 @@ impl<T> StaticList<T>
 
         // Fix the linking chain.
         if let Some(prev) = elem_prev {
-            self.buf[prev].as_mut().unwrap().next = elem_next;
+            self.buf[prev.get()-1].as_mut().unwrap().next = elem_next;
         }
         if let Some(next) = elem_next {
-            self.buf[next].as_mut().unwrap().prev = elem_prev;
+            self.buf[next.get()-1].as_mut().unwrap().prev = elem_prev;
         }
 
         // Decrease the length of the list.
         self.len -= 1;
         // Remove the element from the list.
-        self.buf[refer.index] = None;
+        self.buf[refer.index.get()-1] = None;
         mem::drop(refer);
     }
 
@@ -148,7 +160,7 @@ impl<T> StaticList<T>
     pub fn get(&self, refer: &StaticListRef<T>) -> &T {
         self.assert_ref(refer);
 
-        &self.buf[refer.index].as_ref().unwrap().item
+        &self.buf[refer.index.get()-1].as_ref().unwrap().item
     }
 
     /// Pust a new element in front of the list.
@@ -169,9 +181,9 @@ impl<T> StaticList<T>
         self.head = match self.head {
             Some(v) => {
                 new_element.next = Some(v);
-                Some(new_slot_index)
+                Some(NonZeroUsize::new(new_slot_index+1).unwrap())
             },
-            None => Some(new_slot_index),
+            None => Some(NonZeroUsize::new(new_slot_index+1).unwrap()),
         };
 
         // Increase the length.
@@ -180,7 +192,7 @@ impl<T> StaticList<T>
         self.buf[new_slot_index] = Some(new_element);
 
         Ok(StaticListRef {
-            index: new_slot_index,
+            index: NonZeroUsize::new(new_slot_index+1).unwrap(),
             list: NonNull::new(self).unwrap(),
         })
     }
