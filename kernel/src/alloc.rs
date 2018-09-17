@@ -77,7 +77,7 @@ pub struct AllocationContext {
     // only increase because currently we assume that we can allocate slaps
     // but we cannot deallocate slap. If we want to deallocate slaps, we can
     // improve it later.
-    next_slap_addr: u64,
+    next_slap_addr: NonZeroU64,
 }
 
 /// Since currently we assume that there is only one core that can use this
@@ -97,7 +97,7 @@ impl AllocationContext {
         AllocationContext {
             addr_map: StaticMap::new(),
             caches,
-            next_slap_addr: config::KERNEL_HEAP_START,
+            next_slap_addr: NonZeroU64::new(config::KERNEL_HEAP_START).unwrap(),
         }
     }
 }

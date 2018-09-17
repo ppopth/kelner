@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![feature(tool_lints, panic_handler, doc_cfg)]
+#![feature(lang_items, tool_lints, panic_handler, doc_cfg)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
@@ -58,3 +58,14 @@ pub extern "C" fn _start() -> ! {
 pub fn panic(_info: &PanicInfo) -> ! {
     loop {}
 }
+
+/// Mock function for Rust stack unwinding.
+#[lang = "eh_personality"]
+#[cfg(not(test))]
+#[no_mangle]
+pub extern fn eh_personality() {}
+
+/// Mock function for libunwind's _Unwind_Resume.
+#[cfg(not(test))]
+#[no_mangle]
+pub extern "C" fn _Unwind_Resume() {}
