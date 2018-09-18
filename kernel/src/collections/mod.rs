@@ -19,6 +19,8 @@
 
 mod static_list;
 mod static_map;
+mod static_stack;
 
 pub use self::static_list::*;
 pub use self::static_map::*;
+pub use self::static_stack::*;
