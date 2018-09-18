@@ -10,7 +10,6 @@ panic = "abort"
 panic = "abort"
 
 [profile.test]
-incremental = false
 
 [dependencies]
 rlibc = "1.0"
