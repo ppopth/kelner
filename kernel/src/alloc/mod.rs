@@ -18,15 +18,20 @@
 //! memory allocation.
 
 mod context;
+#[cfg(not(test))]
 mod allocator;
 
+#[cfg(not(test))]
 pub use self::allocator::Allocator;
 
+#[cfg(not(test))]
 use self::context::*;
 
+#[cfg(not(test))]
 static mut CONTEXT: Option<AllocationContext> = None;
 
 /// Initialization function for the entire kernel memory allocation module.
+#[cfg(not(test))]
 pub fn init() {
     unsafe {
         CONTEXT = Some(AllocationContext::new());

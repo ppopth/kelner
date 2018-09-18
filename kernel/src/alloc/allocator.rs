@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
+#![cfg(not(test))]
 
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr;
@@ -31,6 +32,9 @@ unsafe impl GlobalAlloc for Allocator {
         }
     }
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        CONTEXT.as_mut().unwrap().dealloc(ptr, layout);
+        // If the memory is not already allocated, just silently return
+        // from the function. We don't want to panic because this is a usual
+        // situation that will happen so often.
+        let _ = CONTEXT.as_mut().unwrap().dealloc(ptr, layout);
     }
 }

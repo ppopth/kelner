@@ -24,7 +24,6 @@
 // Lints that are allowed.
 #![allow(clippy::explicit_iter_loop)]
 
-#[cfg(not(test))]
 mod alloc;
 mod collections;
 mod config;
