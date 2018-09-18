@@ -13,7 +13,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![feature(lang_items, tool_lints, panic_handler, doc_cfg)]
+#![feature(lang_items)]
+#![feature(tool_lints)]
+#![feature(panic_handler)]
+#![feature(doc_cfg)]
+#![feature(allocator_api)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
