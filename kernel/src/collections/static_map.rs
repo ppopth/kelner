@@ -15,12 +15,12 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
-use core::num::NonZeroU64;
+use core::num::NonZeroUsize;
 use core::hash::Hasher;
 use core::{mem, ptr};
 use siphasher::sip::SipHasher;
 
-/// The static size of the hash table. The default is 0x100000.
+/// The static size of the hash table.
 #[cfg(not(test))]
 const HASH_SIZE: usize = 0x0010_0000;
 #[cfg(test)]
@@ -29,7 +29,6 @@ const HASH_SIZE: usize = 3;
 /// The error type for [StaticMap](StaticMap).
 #[derive(Debug, Eq, PartialEq)]
 pub enum Error {
-    NotFound,
     DuplicateKey,
     MapFull,
 }
@@ -47,10 +46,10 @@ impl HashU64 for u64 {
     }
 }
 
-impl HashU64 for NonZeroU64 {
+impl HashU64 for NonZeroUsize {
     fn hash(&self) -> u64 {
         let mut hasher = SipHasher::new();
-        hasher.write_u64(self.get());
+        hasher.write_u64(self.get() as u64);
         hasher.finish()
     }
 }
@@ -128,20 +127,20 @@ impl<K, V> StaticMap<K, V>
     }
 
     /// Remove an entry from the map using a key.
-    pub fn remove(&mut self, key: K) -> Result<V, Error> {
+    pub fn remove(&mut self, key: K) -> Result<V, ()> {
         let idx = match self.find_idx(key) {
             Some(v) => v,
-            None => return Err(Error::NotFound),
+            None => return Err(()),
         };
         self.remove_idx(idx)
     }
 
     /// Remove an entry from the map using an index in the hash table.
-    pub fn remove_idx(&mut self, idx: usize) -> Result<V, Error> {
+    pub fn remove_idx(&mut self, idx: usize) -> Result<V, ()> {
         // Keep the value.
         let value = match self.ht[idx].take() {
             Some(e) => e.value,
-            None => return Err(Error::NotFound),
+            None => return Err(()),
         };
 
         // The algorithm here will iterate through each entry in the hash
@@ -169,8 +168,8 @@ impl<K, V> StaticMap<K, V>
                         break;
                     }
                 };
-                if (i > idx && (pos <= idx || pos > i)) ||
-                   (i < idx && (pos > i && pos <= idx)) {
+                if (i > idx && (pos <= idx || pos > i))
+                    || (i < idx && (pos > i && pos <= idx)) {
                     self.ht[idx] = self.ht[i].take();
                     removed_idx = Some(i);
                     break;
@@ -234,13 +233,14 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn remove_non_existing_entry() {
         let mut map: StaticMap<u64, u64> = StaticMap::new();
         assert!(map.insert(0, 0).is_ok());
         assert!(map.insert(1, 0).is_ok());
 
         // This one should return error, because the entry doesn't exist.
-        assert_eq!(map.remove(2).unwrap_err(), Error::NotFound);
+        map.remove(2).unwrap();
     }
 
     #[test]

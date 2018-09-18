@@ -20,7 +20,7 @@ use core::{mem, ptr};
 use ::util::WeakRng;
 use ::util::Usize;
 
-/// The static size of the linked list. The default is 0x100000.
+/// The static size of the linked list.
 #[cfg(not(test))]
 const LIST_SIZE: usize = 0x0001_0000;
 #[cfg(test)]
