@@ -20,7 +20,7 @@ use core::{mem, ptr};
 #[cfg(not(test))]
 const STACK_SIZE: usize = 0x0001_0000;
 #[cfg(test)]
-const STACK_SIZE: usize = 3;
+const STACK_SIZE: usize = 6;
 
 /// An entry in [StaticStack](StaticStack).
 pub struct StaticStack<T> {
@@ -132,8 +132,11 @@ mod tests {
         assert!(stack.push(1).is_ok());
         assert!(stack.push(2).is_ok());
         assert!(stack.push(3).is_ok());
+        assert!(stack.push(4).is_ok());
+        assert!(stack.push(5).is_ok());
+        assert!(stack.push(6).is_ok());
 
         // This one should return error, because the stack is full already.
-        stack.push(4).unwrap();
+        stack.push(6).unwrap();
     }
 }
