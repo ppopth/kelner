@@ -18,9 +18,11 @@
 //! used throughout the kernel.
 
 mod set_bits;
+mod logarithm;
 mod weak_rng;
 mod unsigned;
 
 pub use self::set_bits::*;
 pub use self::weak_rng::*;
 pub use self::unsigned::*;
+pub use self::logarithm::*;
