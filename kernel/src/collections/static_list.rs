@@ -24,7 +24,7 @@ use ::util::Usize;
 #[cfg(not(test))]
 const LIST_SIZE: usize = 0x0001_0000;
 #[cfg(test)]
-const LIST_SIZE: usize = 3;
+const LIST_SIZE: usize = 6;
 
 /// The error type for [StaticList](StaticList).
 #[derive(Debug, Eq, PartialEq)]
@@ -120,7 +120,7 @@ impl<T> StaticList<T>
     }
 
     /// Remove some specific element from the list.
-    pub fn remove(&mut self, refer: StaticListRef<T>) {
+    pub fn remove(&mut self, refer: StaticListRef<T>) -> T {
         self.assert_ref(&refer);
 
         let (elem_prev, elem_next) = {
@@ -145,9 +145,11 @@ impl<T> StaticList<T>
 
         // Decrease the length of the list.
         self.len -= 1;
-        // Remove the element from the list.
-        self.buf[refer.index.get()] = None;
+        let index = refer.index.get();
         mem::drop(refer);
+
+        // Remove the element from the list and return the item inside.
+        self.buf[index].take().unwrap().item
     }
 
     /// Get an item using a reference.
@@ -161,7 +163,7 @@ impl<T> StaticList<T>
     pub fn push(&mut self, item: T) -> Result<StaticListRef<T>, Error>
     {
         // Find a new empty slot in the list.
-        let new_slot_index = self.find_empty_slot()?;
+        let new_slot_index = Usize::new(self.find_empty_slot()?);
 
         // If the list is not full, we can create a new list element
         // containing a parameter item.
@@ -174,19 +176,24 @@ impl<T> StaticList<T>
         // Link a new element to the list.
         self.head = match self.head {
             Some(v) => {
+                // Link a new element to an old element.
                 new_element.next = Some(v);
-                Some(Usize::new(new_slot_index))
+                // Link an old element to a new element.
+                let head_item = self.buf[v.get()].as_mut().unwrap();
+                head_item.prev = Some(new_slot_index);
+
+                Some(new_slot_index)
             },
-            None => Some(Usize::new(new_slot_index)),
+            None => Some(new_slot_index),
         };
 
         // Increase the length.
         self.len += 1;
 
-        self.buf[new_slot_index] = Some(new_element);
+        self.buf[new_slot_index.get()] = Some(new_element);
 
         Ok(StaticListRef {
-            index: Usize::new(new_slot_index),
+            index: new_slot_index,
             list: NonNull::new(self).unwrap(),
         })
     }
@@ -205,7 +212,7 @@ mod tests {
         assert_eq!(*list.get(&e3), 30);
         assert_eq!(*list.get(&e2), 20);
         assert_eq!(*list.get(&e1), 10);
-        list.remove(e3);
+        assert_eq!(list.remove(e3), 30);
         assert_eq!(*list.get(&e2), 20);
         assert_eq!(*list.get(&e1), 10);
     }
@@ -225,14 +232,28 @@ mod tests {
         let e3 = list.push(3).unwrap();
         assert_eq!(list.len(), 3);
 
-        list.remove(e3);
+        assert_eq!(list.remove(e2), 2);
         assert_eq!(list.len(), 2);
 
-        list.remove(e2);
+        assert_eq!(list.remove(e1), 1);
         assert_eq!(list.len(), 1);
 
-        list.remove(e1);
+        assert_eq!(list.remove(e3), 3);
         assert_eq!(list.len(), 0);
+    }
+
+    #[test]
+    fn push_alternate_with_remove() {
+        let mut list: StaticList<u64> = StaticList::new();
+
+        assert_eq!(list.len(), 0);
+
+        let e1 = list.push(1).unwrap();
+        let e2 = list.push(2).unwrap();
+        assert_eq!(list.remove(e2), 2);
+        let e3 = list.push(3).unwrap();
+        assert_eq!(list.remove(e1), 1);
+        assert_eq!(list.remove(e3), 3);
     }
 
     #[test]
@@ -241,9 +262,12 @@ mod tests {
         assert!(list.push(1).is_ok());
         assert!(list.push(2).is_ok());
         assert!(list.push(3).is_ok());
+        assert!(list.push(4).is_ok());
+        assert!(list.push(5).is_ok());
+        assert!(list.push(6).is_ok());
 
         // This one should return error, because the map is full already.
-        assert_eq!(list.push(4).unwrap_err(), Error::ListFull);
+        assert_eq!(list.push(7).unwrap_err(), Error::ListFull);
     }
 
     #[test]
