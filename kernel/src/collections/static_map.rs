@@ -24,7 +24,7 @@ use siphasher::sip::SipHasher;
 #[cfg(not(test))]
 const HASH_SIZE: usize = 0x0010_0000;
 #[cfg(test)]
-const HASH_SIZE: usize = 3;
+const HASH_SIZE: usize = 6;
 
 /// The error type for [StaticMap](StaticMap).
 #[derive(Debug, Eq, PartialEq)]
@@ -262,9 +262,12 @@ mod tests {
         assert!(map.insert(0, 0).is_ok());
         assert!(map.insert(1, 0).is_ok());
         assert!(map.insert(2, 0).is_ok());
+        assert!(map.insert(3, 0).is_ok());
+        assert!(map.insert(4, 0).is_ok());
+        assert!(map.insert(5, 0).is_ok());
 
         // This one should return error, because the map is full already.
-        assert_eq!(map.insert(3, 0).unwrap_err(), Error::MapFull);
+        assert_eq!(map.insert(6, 0).unwrap_err(), Error::MapFull);
     }
 
     #[test]
