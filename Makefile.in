@@ -18,6 +18,7 @@ CARGO = cargo
 NASMFLAGS = -f bin
 RUSTFLAGS = -Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
 CLIPPYFLAGS = --all-features --all-targets
+QEMUMEM = 64M
 MANIFESTPATH = kernel/Cargo.toml
 CLEANFILES = build target
 DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
@@ -39,11 +40,11 @@ distclean:
 
 .PHONY: qemu
 qemu: build/disk
-	qemu-system-$(ARCH) -drive file=$<,format=raw
+	qemu-system-$(ARCH) -m $(QEMUMEM) -drive file=$<,format=raw
 
 .PHONY: debug
 debug: build/diskdev
-	qemu-system-$(ARCH) -s -S -drive file=$<,format=raw & \
+	qemu-system-$(ARCH) -m $(QEMUMEM) -s -S -drive file=$<,format=raw & \
 	gdb && fg
 
 .PHONY: check

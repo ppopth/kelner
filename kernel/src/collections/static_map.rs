@@ -22,7 +22,7 @@ use siphasher::sip::SipHasher;
 
 /// The static size of the hash table.
 #[cfg(not(test))]
-const HASH_SIZE: usize = 0x0010_0000;
+const HASH_SIZE: usize = 0x0000_8000;
 #[cfg(test)]
 const HASH_SIZE: usize = 6;
 

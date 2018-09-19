@@ -22,7 +22,7 @@ use ::util::Usize;
 
 /// The static size of the linked list.
 #[cfg(not(test))]
-const LIST_SIZE: usize = 0x0001_0000;
+const LIST_SIZE: usize = 0x0000_1000;
 #[cfg(test)]
 const LIST_SIZE: usize = 6;
 

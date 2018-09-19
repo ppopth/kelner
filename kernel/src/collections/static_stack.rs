@@ -18,7 +18,7 @@ use core::{mem, ptr};
 
 /// The static size of the stack.
 #[cfg(not(test))]
-const STACK_SIZE: usize = 0x0001_0000;
+const STACK_SIZE: usize = 0x0000_1000;
 #[cfg(test)]
 const STACK_SIZE: usize = 6;
 
