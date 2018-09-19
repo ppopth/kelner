@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![feature(lang_items)]
+#![feature(alloc)]
+#![feature(alloc_error_handler)]
 #![feature(tool_lints)]
 #![feature(panic_handler)]
 #![feature(doc_cfg)]
@@ -24,7 +26,7 @@
 // Lints that are allowed.
 #![allow(clippy::explicit_iter_loop)]
 
-mod alloc;
+mod kalloc;
 mod collections;
 mod config;
 mod util;
@@ -32,24 +34,28 @@ mod debug;
 
 #[cfg(not(test))]
 use core::panic::PanicInfo;
+#[cfg(not(test))]
+use core::alloc::Layout;
 
 #[cfg(test)]
 #[macro_use]
 extern crate std;
+extern crate alloc;
 extern crate rlibc;
 extern crate siphasher;
 
 /// Global allocator which will be used when there is a heap allocation.
 #[cfg(not(test))]
 #[global_allocator]
-static ALLOCATOR: alloc::Allocator = alloc::Allocator;
+static ALLOCATOR: kalloc::Allocator = kalloc::Allocator;
 
 /// An entry function when the kernel is booted.
 #[allow(clippy::empty_loop)]
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    alloc::init();
+    kalloc::init();
+    debug::println("Hello World!");
     loop {}
 }
 
@@ -59,6 +65,14 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 #[no_mangle]
 pub fn panic(_info: &PanicInfo) -> ! {
+    loop {}
+}
+
+#[allow(clippy::empty_loop)]
+#[cfg(not(test))]
+#[alloc_error_handler]
+#[no_mangle]
+pub fn error_handler(_layout: Layout) -> ! {
     loop {}
 }
 

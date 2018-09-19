@@ -17,7 +17,7 @@
 
 use core::alloc::{GlobalAlloc, Layout};
 use core::ptr;
-use ::alloc::CONTEXT;
+use ::kalloc::CONTEXT;
 
 /// Empty structure to used in Rust's `global_allocator` feature.
 pub struct Allocator;
