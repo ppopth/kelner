@@ -28,6 +28,7 @@
 
 mod collections;
 mod config;
+#[macro_use]
 mod debug;
 mod kalloc;
 mod util;
@@ -55,7 +56,8 @@ static ALLOCATOR: kalloc::Allocator = kalloc::Allocator;
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     kalloc::init();
-    debug::println("Hello World!");
+    println!("Hello World!");
+    println!("My name is Kelner.");
     loop {}
 }
 

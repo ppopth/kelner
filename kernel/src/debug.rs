@@ -18,6 +18,8 @@
 //! Debugging module. This module is used for debugging purpose only.
 //! You can print any string on the screen using this module.
 
+use core::fmt;
+
 /// The maximum number of columns on the screen.
 const NUM_COLUMNS: usize = 80;
 /// The maximum number of lines on the screen.
@@ -34,46 +36,61 @@ static mut SCREEN: Screen = Screen {
     y: 0,
 };
 
-/// Print a string with a new line.
-pub fn println(s: &str) {
-    print(s);
-    printnl();
-}
+impl Screen {
+    /// Print one character.
+    fn putc(&mut self, byte: u8) {
+        if byte == b'\n' {
+            self.y += 1;
+            self.x = 0;
+            if self.y == NUM_LINES {
+                self.y = 0;
+            }
+            return;
+        }
+        unsafe {
+            let position = self.y * NUM_COLUMNS + self.x;
+            let vga_buffer = 0xb8000 as *mut u8;
 
-/// Print a string.
-pub fn print(s: &str) {
-    for &byte in s.as_bytes().iter() {
-        printc(byte);
+            *vga_buffer.offset(position as isize * 2) = byte;
+            *vga_buffer.offset(position as isize * 2 + 1) = 0xb;
+
+            self.x += 1;
+            if self.x == NUM_COLUMNS {
+                self.x = 0;
+                self.y += 1;
+            }
+            if self.y == NUM_LINES {
+                self.y = 0;
+            }
+        }
     }
 }
 
-/// Print a new line.
-pub fn printnl() {
+impl fmt::Write for Screen {
+    fn write_str(&mut self, s: &str) -> Result<(), fmt::Error> {
+        for c in s.bytes() {
+            self.putc(c);
+        }
+        Ok(())
+    }
+}
+
+pub fn write(args: fmt::Arguments) -> Result<(), fmt::Error> {
     unsafe {
-        SCREEN.x = 0;
-        SCREEN.y += 1;
-        if SCREEN.y == NUM_LINES {
-            SCREEN.y = 0;
-        }
+        fmt::write(&mut SCREEN, args)?;
     }
+    Ok(())
 }
 
-/// Print one character.
-pub fn printc(byte: u8) {
-    unsafe {
-        let position = SCREEN.y * NUM_COLUMNS + SCREEN.x;
-        let vga_buffer = 0xb8000 as *mut u8;
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::debug::write(format_args!($($arg)*)));
+}
 
-        *vga_buffer.offset(position as isize * 2) = byte;
-        *vga_buffer.offset(position as isize * 2 + 1) = 0xb;
-
-        SCREEN.x += 1;
-        if SCREEN.x == NUM_COLUMNS {
-            SCREEN.x = 0;
-            SCREEN.y += 1;
-        }
-        if SCREEN.y == NUM_LINES {
-            SCREEN.y = 0;
-        }
-    }
+#[macro_export]
+macro_rules! println {
+    () => (print!("\n"));
+    ($($arg:tt)*) => ({
+        let _ = print!("{}\n", format_args!($($arg)*));
+    })
 }
