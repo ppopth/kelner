@@ -1,5 +1,5 @@
 target remote localhost:1234
-file target/debug/kernel
+file target/@KELNER_ARCH@-unknown-none/debug/kernel
 define ri
   x/10i $rip
 end

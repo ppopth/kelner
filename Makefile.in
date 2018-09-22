@@ -13,15 +13,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-ARCH = x86_64
+ARCH = @KELNER_ARCH@
 NASMFLAGS = -f bin
 RUSTFLAGS = -Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
 CLIPPYFLAGS = --all-features --all-targets
-QEMUMEM = 64M
+QEMUMEM = 128M
 MANIFESTPATH = kernel/Cargo.toml
-CLEANFILES = build target
-DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
 TARGETDIR = target
+CLEANFILES = build $(TARGETDIR)/$(TARGET)
+DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
+TARGET = $(ARCH)-unknown-none
+STANDARD_LIBS = core compiler_builtins alloc
+CUSTOMIZED_CARGO_CMD = RUSTUP_TOOLCHAIN=$(shell cat rust-toolchain) \
+	$(TARGETDIR)/release/cargo
+STANDARD_LIB_FILENAMES = $(addsuffix .rlib, $(addprefix lib, $(STANDARD_LIBS)))
 VERBOSE =
 @KELNER_VERBOSE@ VERBOSE = --verbose
 @KELNER_FATAL_WARNINGS@ NASMFLAGS += -Werror
@@ -37,7 +42,7 @@ clean:
 
 .PHONY: distclean
 distclean:
-	rm -rf $(CLEANFILES) $(DISTCLEANFILES)
+	rm -rf $(CLEANFILES) $(TARGETDIR) $(DISTCLEANFILES)
 
 .PHONY: qemu
 qemu: build/disk
@@ -79,9 +84,9 @@ build/disk: build/kernel bootloader/*
 	mkdir -p build
 	nasm $(NASMFLAGS) -o $@ \
 		-D KERNEL_FILE=../$< -ibootloader/ \
-		-D ENTRY_POINT=$(shell objdump -f target/release/kernel | \
+		-D ENTRY_POINT=$(shell objdump -f $(TARGETDIR)/$(TARGET)/release/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \
-		-D BSS_SIZE=$(shell size -x target/release/kernel | \
+		-D BSS_SIZE=$(shell size -x $(TARGETDIR)/$(TARGET)/release/kernel | \
 			awk '{$$1=$$1};1' | tail -n 1 | cut -d ' ' -f 3) \
 		bootloader/disk.asm
 
@@ -89,26 +94,65 @@ build/diskdev: build/kerneldev bootloader/*
 	mkdir -p build
 	nasm $(NASMFLAGS) -o $@ \
 		-D KERNEL_FILE=../$< -ibootloader/ \
-		-D ENTRY_POINT=$(shell objdump -f target/debug/kernel | \
+		-D ENTRY_POINT=$(shell objdump -f $(TARGETDIR)/$(TARGET)/debug/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \
-		-D BSS_SIZE=$(shell size -x target/debug/kernel | \
+		-D BSS_SIZE=$(shell size -x $(TARGETDIR)/$(TARGET)/debug/kernel | \
 			awk '{$$1=$$1};1' | tail -n 1 | cut -d ' ' -f 3) \
 		bootloader/disk.asm
 
-build/kernel: $(shell find kernel -type f)
+build/kernel: $(TARGETDIR)/release/cargo \
+	$(addprefix $(TARGETDIR)/$(TARGET)/release/, $(STANDARD_LIB_FILENAMES)) \
+	$(shell find kernel -type f)
 	mkdir -p build
-	cargo rustc \
+	$(CUSTOMIZED_CARGO_CMD) rustc \
 		$(VERBOSE) \
+		--target kernel/targets/$(TARGET).json \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR) \
 		--release -- $(RUSTFLAGS)
-	objcopy -O binary -S target/release/kernel $@
+	objcopy -O binary -S $(TARGETDIR)/$(TARGET)/release/kernel $@
 
-build/kerneldev: $(shell find kernel -type f)
+build/kerneldev: $(TARGETDIR)/release/cargo \
+	$(addprefix $(TARGETDIR)/$(TARGET)/debug/, $(STANDARD_LIB_FILENAMES)) \
+	$(shell find kernel -type f)
 	mkdir -p build
-	cargo rustc \
+	$(CUSTOMIZED_CARGO_CMD) rustc \
 		$(VERBOSE) \
+		--target kernel/targets/$(TARGET).json \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR) \
 		-- $(RUSTFLAGS)
-	objcopy -O binary -S target/debug/kernel $@
+	objcopy -O binary -S $(TARGETDIR)/$(TARGET)/debug/kernel $@
+
+# Compile our customized Cargo.
+$(TARGETDIR)/release/cargo: $(shell find cargo -type f)
+	mkdir -p $(TARGETDIR)
+	cargo build \
+		--manifest-path cargo/Cargo.toml \
+		--target-dir $(TARGETDIR) \
+		--release
+
+# Compile all standard libraries dependencies for debug environment.
+$(TARGETDIR)/$(TARGET)/debug/lib%.rlib: \
+	rust/src/lib%/Cargo.toml \
+	$(TARGETDIR)/release/cargo \
+	kernel/targets/$(TARGET).json
+	$(CUSTOMIZED_CARGO_CMD) rustc \
+		$(VERBOSE) \
+		--manifest-path $< \
+		--target kernel/targets/$(TARGET).json \
+		--target-dir $(TARGETDIR) \
+		-- -A unused_attributes
+
+# Compile all standard libraries dependencies for release environment.
+$(TARGETDIR)/$(TARGET)/release/lib%.rlib: \
+	rust/src/lib%/Cargo.toml \
+	$(TARGETDIR)/release/cargo \
+	kernel/targets/$(TARGET).json
+	$(CUSTOMIZED_CARGO_CMD) rustc \
+		$(VERBOSE) \
+		--manifest-path $< \
+		--target kernel/targets/$(TARGET).json \
+		--target-dir $(TARGETDIR) \
+		--release \
+		-- -A unused_attributes

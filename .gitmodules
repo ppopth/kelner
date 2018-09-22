@@ -1,0 +1,7 @@
+[submodule "cargo"]
+	path = cargo
+	branch = kelner
+	url = https://github.com/haxxpop/cargo.git
+[submodule "rust"]
+	path = rust
+	url = https://github.com/rust-lang/rust.git

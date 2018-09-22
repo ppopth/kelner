@@ -13,36 +13,36 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![feature(lang_items)]
 #![feature(alloc)]
-#![feature(alloc_error_handler)]
-#![feature(tool_lints)]
-#![feature(panic_handler)]
-#![feature(doc_cfg)]
 #![feature(allocator_api)]
+#![feature(alloc_error_handler)]
+#![feature(doc_cfg)]
+#![feature(lang_items)]
+#![feature(panic_handler)]
+#![feature(tool_lints)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
 // Lints that are allowed.
 #![allow(clippy::explicit_iter_loop)]
 
-mod kalloc;
 mod collections;
 mod config;
-mod util;
 mod debug;
+mod kalloc;
+mod util;
 
-#[cfg(not(test))]
-use core::panic::PanicInfo;
 #[cfg(not(test))]
 use core::alloc::Layout;
+#[cfg(not(test))]
+use core::panic::PanicInfo;
 
-#[cfg(test)]
-#[macro_use]
-extern crate std;
 extern crate alloc;
 extern crate rlibc;
 extern crate siphasher;
+#[cfg(test)]
+#[macro_use]
+extern crate std;
 
 /// Global allocator which will be used when there is a heap allocation.
 #[cfg(not(test))]

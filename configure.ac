@@ -43,8 +43,11 @@ AC_SUBST(KELNER_KERNEL_HEAP_END)
 KELNER_KERNEL_STACK_START="0x1000000"
 AC_SUBST(KELNER_KERNEL_STACK_START)
 
-KELNER_KERNEL_STACK_END="0x1800000"
+KELNER_KERNEL_STACK_END="0x4000000"
 AC_SUBST(KELNER_KERNEL_STACK_END)
+
+KELNER_ARCH="x86_64"
+AC_SUBST(KELNER_ARCH)
 
 dnl Other parameters may be changed, but this one must not! It's not easy
 dnl to change a page size arbitrarily.
@@ -57,6 +60,7 @@ KELNER_PAGE_SIZE_LOG="21"
 AC_SUBST(KELNER_PAGE_SIZE_LOG)
 
 AC_CONFIG_FILES([
+  .gdbinit
   Makefile
   bootloader/config.asm
   kernel/layout.ld
