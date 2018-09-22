@@ -21,6 +21,10 @@ AC_ARG_ENABLE(fatal-warnings,
      AS_HELP_STRING(--enable-fatal-warnings,
                     [tell the compiler to treat all warnings as errors.]))
 
+AC_ARG_ENABLE(verbose,
+     AS_HELP_STRING(--enable-verbose,
+                    [show the verbose for all operations.]))
+
 KELNER_AUTHOR_NAME="Suphanat Chunhapanya"
 AC_SUBST(KELNER_AUTHOR_NAME)
 
@@ -67,6 +71,14 @@ else
   KELNER_FATAL_WARNINGS=#
 fi
 AC_SUBST(KELNER_FATAL_WARNINGS)
+
+if test "x$enable_verbose" = "xyes"; then
+  KELNER_VERBOSE=
+else
+  # The sharp is used to comment the code in Makefile
+  KELNER_VERBOSE=#
+fi
+AC_SUBST(KELNER_VERBOSE)
 
 KELNER_CONFIG_FILES=$ac_config_files
 AC_SUBST(KELNER_CONFIG_FILES)

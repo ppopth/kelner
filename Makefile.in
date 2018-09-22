@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 ARCH = x86_64
-CARGO = cargo
 NASMFLAGS = -f bin
 RUSTFLAGS = -Z pre-link-arg=-nostartfiles -Z pre-link-arg=-Tlayout.ld
 CLIPPYFLAGS = --all-features --all-targets
@@ -23,6 +22,8 @@ MANIFESTPATH = kernel/Cargo.toml
 CLEANFILES = build target
 DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
 TARGETDIR = target
+VERBOSE =
+@KELNER_VERBOSE@ VERBOSE = --verbose
 @KELNER_FATAL_WARNINGS@ NASMFLAGS += -Werror
 @KELNER_FATAL_WARNINGS@ RUSTFLAGS += -D warnings
 @KELNER_FATAL_WARNINGS@ CLIPPYFLAGS += -- -D warnings
@@ -50,23 +51,27 @@ debug: build/diskdev
 .PHONY: check
 check:
 	mkdir -p build
-	$(CARGO) test \
+	cargo test \
+		$(VERBOSE) \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR)
-	$(CARGO) clippy \
+	cargo clippy \
+		$(VERBOSE) \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR) \
 		$(CLIPPYFLAGS)
 
 .PHONY: doc
 doc:
-	$(CARGO) doc \
+	cargo doc \
+		$(VERBOSE) \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR)
 
 .PHONY: privdoc
 privdoc:
-	$(CARGO) doc --document-private-items \
+	cargo doc --document-private-items \
+		$(VERBOSE) \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR)
 
@@ -92,7 +97,8 @@ build/diskdev: build/kerneldev bootloader/*
 
 build/kernel: $(shell find kernel -type f)
 	mkdir -p build
-	$(CARGO) rustc \
+	cargo rustc \
+		$(VERBOSE) \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR) \
 		--release -- $(RUSTFLAGS)
@@ -100,7 +106,8 @@ build/kernel: $(shell find kernel -type f)
 
 build/kerneldev: $(shell find kernel -type f)
 	mkdir -p build
-	$(CARGO) rustc \
+	cargo rustc \
+		$(VERBOSE) \
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR) \
 		-- $(RUSTFLAGS)
