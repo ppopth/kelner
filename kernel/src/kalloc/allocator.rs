@@ -31,10 +31,11 @@ unsafe impl GlobalAlloc for Allocator {
             Err(_) => ptr::null_mut(),
         }
     }
+    #[allow(unused_must_use)]
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         // If the memory is not already allocated, just silently return
         // from the function. We don't want to panic because this is a usual
         // situation that will happen so often.
-        let _ = CONTEXT.as_mut().unwrap().dealloc(ptr, layout);
+        CONTEXT.as_mut().unwrap().dealloc(ptr, layout);
     }
 }
