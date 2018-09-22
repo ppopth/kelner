@@ -20,12 +20,14 @@ CLIPPYFLAGS = --all-features --all-targets
 QEMUMEM = 128M
 MANIFESTPATH = kernel/Cargo.toml
 TARGETDIR = target
-CLEANFILES = build $(TARGETDIR)/$(TARGET)
+CLEANFILES = build $(TARGETDIR)
+DEEPCLEANFILES = .bin
 DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
 TARGET = $(ARCH)-unknown-none
 STANDARD_LIBS = core compiler_builtins alloc
+CUSTOMIZED_CARGO = .bin/cargo
 CUSTOMIZED_CARGO_CMD = RUSTUP_TOOLCHAIN=$(shell cat rust-toolchain) \
-	$(TARGETDIR)/release/cargo
+	$(CUSTOMIZED_CARGO)
 STANDARD_LIB_FILENAMES = $(addsuffix .rlib, $(addprefix lib, $(STANDARD_LIBS)))
 VERBOSE =
 @KELNER_VERBOSE@ VERBOSE = --verbose
@@ -40,9 +42,13 @@ all: build/disk
 clean:
 	rm -rf $(CLEANFILES)
 
+.PHONY: deepclean
+deepclean:
+	rm -rf $(CLEANFILES) $(DEEPCLEANFILES)
+
 .PHONY: distclean
 distclean:
-	rm -rf $(CLEANFILES) $(TARGETDIR) $(DISTCLEANFILES)
+	rm -rf $(CLEANFILES) $(DEEPCLEANFILES) $(DISTCLEANFILES)
 
 .PHONY: qemu
 qemu: build/disk
@@ -100,7 +106,7 @@ build/diskdev: build/kerneldev bootloader/*
 			awk '{$$1=$$1};1' | tail -n 1 | cut -d ' ' -f 3) \
 		bootloader/disk.asm
 
-build/kernel: $(TARGETDIR)/release/cargo \
+build/kernel: $(CUSTOMIZED_CARGO) \
 	$(addprefix $(TARGETDIR)/$(TARGET)/release/, $(STANDARD_LIB_FILENAMES)) \
 	$(shell find kernel -type f)
 	mkdir -p build
@@ -112,7 +118,7 @@ build/kernel: $(TARGETDIR)/release/cargo \
 		--release -- $(RUSTFLAGS)
 	objcopy -O binary -S $(TARGETDIR)/$(TARGET)/release/kernel $@
 
-build/kerneldev: $(TARGETDIR)/release/cargo \
+build/kerneldev: $(CUSTOMIZED_CARGO) \
 	$(addprefix $(TARGETDIR)/$(TARGET)/debug/, $(STANDARD_LIB_FILENAMES)) \
 	$(shell find kernel -type f)
 	mkdir -p build
@@ -125,17 +131,21 @@ build/kerneldev: $(TARGETDIR)/release/cargo \
 	objcopy -O binary -S $(TARGETDIR)/$(TARGET)/debug/kernel $@
 
 # Compile our customized Cargo.
-$(TARGETDIR)/release/cargo: $(shell find cargo -type f)
+$(CUSTOMIZED_CARGO): $(shell find cargo -type f)
 	mkdir -p $(TARGETDIR)
+	mkdir -p $(dir $@)
 	cargo build \
 		--manifest-path cargo/Cargo.toml \
 		--target-dir $(TARGETDIR) \
 		--release
+	cp $(TARGETDIR)/release/cargo $(CUSTOMIZED_CARGO)
 
 # Compile all standard libraries dependencies for debug environment.
+# Please note that when the target json file changes, this will not recompile.
+# I still don't know how to force Cargo to compile in this case.
 $(TARGETDIR)/$(TARGET)/debug/lib%.rlib: \
 	rust/src/lib%/Cargo.toml \
-	$(TARGETDIR)/release/cargo \
+	$(CUSTOMIZED_CARGO) \
 	kernel/targets/$(TARGET).json
 	$(CUSTOMIZED_CARGO_CMD) rustc \
 		$(VERBOSE) \
@@ -145,9 +155,11 @@ $(TARGETDIR)/$(TARGET)/debug/lib%.rlib: \
 		-- -A unused_attributes
 
 # Compile all standard libraries dependencies for release environment.
+# Please note that when the target json file changes, this will not recompile.
+# I still don't know how to force Cargo to compile in this case.
 $(TARGETDIR)/$(TARGET)/release/lib%.rlib: \
 	rust/src/lib%/Cargo.toml \
-	$(TARGETDIR)/release/cargo \
+	$(CUSTOMIZED_CARGO) \
 	kernel/targets/$(TARGET).json
 	$(CUSTOMIZED_CARGO_CMD) rustc \
 		$(VERBOSE) \
