@@ -19,6 +19,7 @@
 #![feature(doc_cfg)]
 #![feature(lang_items)]
 #![feature(panic_handler)]
+#![feature(panic_info_message)]
 #![feature(tool_lints)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
@@ -79,7 +80,13 @@ fn init() {
 #[cfg(not(test))]
 #[panic_handler]
 #[no_mangle]
-pub fn panic(_info: &PanicInfo) -> ! {
+pub fn panic(info: &PanicInfo) -> ! {
+    debug::set_color(debug::Color::LightRed);
+    println!("Kelner paniked!");
+    if let Some(message) = info.message() {
+        println!("{}", message);
+    }
+    debug::reset_color();
     loop {}
 }
 

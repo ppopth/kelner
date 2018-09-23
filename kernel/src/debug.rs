@@ -31,6 +31,16 @@ struct Screen {
     y: usize,
 }
 
+#[derive(Copy, Clone)]
+pub enum Color {
+    Black, Blue, Green, Cyan, Red, Purple, Brown, Gray,
+    DarkGray, LightBlue, LightGreen, LightCyan, LightRed, LightPurple,
+    Yellow, White
+}
+
+const DEFAULT_COLOR: Color = Color::LightCyan;
+static mut FOREGROUND_COLOR: Color = DEFAULT_COLOR;
+
 static mut SCREEN: Screen = Screen {
     x: 0,
     y: 0,
@@ -50,9 +60,10 @@ impl Screen {
         unsafe {
             let position = self.y * NUM_COLUMNS + self.x;
             let vga_buffer = 0xb8000 as *mut u8;
+            let color_byte: u8 = FOREGROUND_COLOR as u8;
 
             *vga_buffer.offset(position as isize * 2) = byte;
-            *vga_buffer.offset(position as isize * 2 + 1) = 0xb;
+            *vga_buffer.offset(position as isize * 2 + 1) = color_byte;
 
             self.x += 1;
             if self.x == NUM_COLUMNS {
@@ -80,6 +91,18 @@ pub fn write(args: fmt::Arguments) -> Result<(), fmt::Error> {
         fmt::write(&mut SCREEN, args)?;
     }
     Ok(())
+}
+
+pub fn set_color(color: Color) {
+    unsafe {
+        FOREGROUND_COLOR = color;
+    }
+}
+
+pub fn reset_color() {
+    unsafe {
+        FOREGROUND_COLOR = DEFAULT_COLOR;
+    }
 }
 
 #[macro_export]
