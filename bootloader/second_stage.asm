@@ -27,6 +27,9 @@ second_stage_start:
     ; Try to enable the a20 line.
     call enable_a20
 
+    ; Analzy memory layout.
+    call detect_memory
+
     ; We will setup a page table, but this one will be temporary and just
     ; good enough to let us enter the long mode because we want to maintain
     ; the table in Rust not Assembly.
@@ -45,6 +48,7 @@ second_stage_msg:
 
 %include "cpu.asm"
 %include "a20.asm"
+%include "memory.asm"
 %include "paging.asm"
 %include "gdt.asm"
 %include "pio_loader.asm"

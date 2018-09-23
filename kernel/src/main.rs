@@ -28,10 +28,12 @@
 
 mod collections;
 mod config;
+#[cfg(not(test))]
 #[macro_use]
 mod debug;
 mod kalloc;
 mod util;
+mod memory;
 
 #[cfg(not(test))]
 use core::alloc::Layout;
@@ -55,10 +57,21 @@ static ALLOCATOR: kalloc::Allocator = kalloc::Allocator;
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    kalloc::init();
+    println!("Booting...");
+    init();
     println!("Hello World!");
     println!("My name is Kelner.");
     loop {}
+}
+
+#[cfg(not(test))]
+/// Initialize everything.
+fn init() {
+    // Memory init must come before the kalloc init because kalloc uses
+    // so much stack memory and memory init can check and abort if there is
+    // not enough physical memory.
+    memory::init();
+    kalloc::init();
 }
 
 /// A function that will be called when there is a panic.

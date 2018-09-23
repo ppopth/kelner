@@ -13,15 +13,32 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![cfg_attr(test, allow(dead_code))]
-#![allow(clippy::unreadable_literal)]
+#![allow(dead_code)]
 
-//! Configuration module. This module contians all configuration parameters
-//! used throughout Kelner.
+const LIST_SIZE: usize = 0x100;
 
-pub const KERNEL_HEAP_START: usize = @KELNER_KERNEL_HEAP_START@;
-pub const KERNEL_HEAP_END: usize = @KELNER_KERNEL_HEAP_END@;
-#[allow(dead_code)]
-pub const USED_KERNEL_MEMORY: &[u8] = b"@KELNER_USED_KERNEL_MEMORY@";
-pub const PAGE_SIZE: usize = @KELNER_PAGE_SIZE@;
-pub const PAGE_SIZE_LOG: usize = @KELNER_PAGE_SIZE_LOG@;
+#[derive(Copy, Clone)]
+struct Interval {
+    start: usize,
+    end: usize,
+}
+
+struct IntervalList {
+    list: [Option<Interval>; LIST_SIZE],
+    len: usize,
+}
+
+impl IntervalList {
+    pub fn new() -> IntervalList {
+        IntervalList {
+            list: [None; LIST_SIZE],
+            len: 0,
+        }
+    }
+    pub fn from(_bytes: &[u8]) -> IntervalList {
+        IntervalList {
+            list: [None; LIST_SIZE],
+            len: 0,
+        }
+    }
+}
