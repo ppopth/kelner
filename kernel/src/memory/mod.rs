@@ -21,14 +21,17 @@ mod layout;
 mod interval;
 
 use self::layout::MemoryLayout;
-
-#[cfg_attr(test, allow(dead_code))]
-static mut MEMORY_LAYOUT: Option<MemoryLayout> = None;
+use self::interval::IntervalList;
+use ::config::USED_KERNEL_MEMORY;
 
 #[cfg_attr(test, allow(dead_code))]
 /// Initialization function for the memory layout module.
 pub fn init() {
-    unsafe {
-        MEMORY_LAYOUT = Some(MemoryLayout::new());
+    let memory_layout = MemoryLayout::new();
+    let free_memory_list = memory_layout.as_free_interval_list();
+    let used_memory_list = IntervalList::from(USED_KERNEL_MEMORY).unwrap();
+
+    if !used_memory_list.is_covered_by(&free_memory_list) {
+        panic!("the memory layout is invalid this system cannot use Kelner");
     }
 }

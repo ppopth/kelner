@@ -16,8 +16,14 @@
 
 use core::slice;
 use core::fmt;
+use ::memory::interval::{Interval, IntervalList};
 
 const LIST_SIZE: usize = 0x100;
+
+// In our convention, the bootloader will store the memory map
+// at 0x508 and the number of entries in the map at 0x500.
+#[cfg(not(test))]
+const LAYOUT_BUFFER: *const u64 = 0x500 as *const u64;
 
 /// Memory entry type returned from the BIOS.
 #[derive(Copy, Clone, Debug)]
@@ -62,16 +68,31 @@ pub struct MemoryLayout {
 }
 
 impl MemoryLayout {
+    /// Return [IntervalList](IntervalList) of all free memory entries.
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub fn as_free_interval_list(&self) -> IntervalList {
+        let mut interval_list = IntervalList::new();
+
+        for item in self.list.iter().take(self.len) {
+            let item = item.unwrap();
+            if let MemoryEntryType::Free = item.entry_type {
+                let interval = Interval::new(
+                    item.base_address,
+                    item.length,
+                );
+                interval_list.push(interval).unwrap();
+            }
+        }
+        interval_list
+    }
+
     /// Create [MemoryLayout](MemoryLayout) from data starting at
     /// address 0x500.
     pub fn new() -> MemoryLayout {
         unsafe {
-            // In our convention, the bootloader will store the memory map
-            // at 0x508 and the number of entries in the map at 0x500.
-            let len = *(0x500 as *const usize);
+            let len = *LAYOUT_BUFFER as usize;
             let mut list = [None; LIST_SIZE];
-
-            let list_buffer = 0x508 as *const u64;
+            let list_buffer = LAYOUT_BUFFER.offset(1);
 
             // Parse each entry in the map.
             for (i, item) in list.iter_mut().enumerate().take(len) {
@@ -94,5 +115,30 @@ impl fmt::Debug for MemoryLayout {
         fmt.debug_struct("MemoryLayout")
             .field("list", &&self.list[..self.len])
             .finish()
+    }
+}
+
+#[cfg(test)]
+const LAYOUT_BUFFER: *const u64 = &[6_u64,
+    0x0000_0000, 0x0009_fc00, 1,
+    0x0009_fc00, 0x0000_0400, 2,
+    0x000f_0000, 0x0001_0000, 2,
+    0x0010_0000, 0x07ee_0000, 1,
+    0x07fe_0000, 0x0002_0000, 2,
+    0xfffc_0000, 0x0004_0000, 2] as *const u64;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn return_correct_free_interval_list() {
+        let memory_layout = MemoryLayout::new();
+        let out_list = memory_layout.as_free_interval_list();
+
+        let mut expected_list = IntervalList::new();
+        expected_list.push(Interval::new(0x0000_0000, 0x0009_fc00)).unwrap();
+        expected_list.push(Interval::new(0x0010_0000, 0x07ee_0000)).unwrap();
+        assert_eq!(out_list, expected_list);
     }
 }

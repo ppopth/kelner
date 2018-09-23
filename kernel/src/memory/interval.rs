@@ -31,24 +31,19 @@ pub enum Error {
 }
 
 /// An interval.
-#[derive(Copy, Clone, Debug)]
-struct Interval {
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Interval {
     start: usize,
-    end: usize,
+    length: usize,
 }
 
 impl Interval {
-    /// Create [Interval](Interval) from `start` and `end`.
-    pub fn new(start: usize, end: usize) -> Result<Interval, ()> {
-        // Make sure that the start is not greater than end.
-        if start > end {
-            return Err(());
-        }
-
-        Ok(Interval {
+    /// Create [Interval](Interval) from `start` and `length`.
+    pub fn new(start: usize, length: usize) -> Interval {
+        Interval {
             start,
-            end,
-        })
+            length,
+        }
     }
 
     /// Create [Interval](Interval) from a slice. For example, `0x1-0x3`.
@@ -93,12 +88,33 @@ impl Interval {
             return Err(());
         }
 
-        Interval::new(start.unwrap(), end.unwrap())
+        Ok(Interval::new(start.unwrap(), end.unwrap() - start.unwrap()))
+    }
+}
+
+/// An iterator for [IntervalList](IntervalList).
+pub struct Iter<'a> {
+    index: usize,
+    interval_list: &'a IntervalList,
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a Interval;
+    /// Get the next item of the iterator.
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index == self.interval_list.len() {
+            None
+        } else {
+            let result = self.interval_list.list[self.index].as_ref().unwrap();
+            self.index += 1;
+            Some(result)
+        }
     }
 }
 
 /// A static interval list which contains a list of intervals.
-struct IntervalList {
+#[derive(Copy, Clone)]
+pub struct IntervalList {
     list: [Option<Interval>; LIST_SIZE],
     len: usize,
 }
@@ -149,6 +165,68 @@ impl IntervalList {
 
         Ok(interval_list)
     }
+
+    /// Get [Iter](Iter) of this interval list.
+    pub fn iter(&self) -> Iter {
+        Iter {
+            index: 0,
+            interval_list: self,
+        }
+    }
+
+    /// Check if all intervals is covered by all intervals in the other list.
+    pub fn is_covered_by(&self, other: &IntervalList) -> bool {
+        let mut list1 = *self;
+        let mut list2 = *other;
+        list1.sort();
+        list2.sort();
+
+        let mut iter2 = list2.iter();
+        let mut item2_opt = iter2.next();
+
+        // This variable will determine the sweep line that indicates that
+        // the range that comes before the line does not need to be covered,
+        // since it is alrady covered or does not need to be covered.
+        let mut line = 0;
+        for item1 in list1.iter() {
+            // If the sweep line is less than the start of the interval, we
+            // know that the range line..item1.start doesn't need to be
+            // covered. So we move the sweep line forward.
+            if item1.start > line {
+                line = item1.start;
+            }
+
+            // Items in list2 must try to eat the entire iterval item1.
+            while let Some(item2) = item2_opt {
+                // If the start of item2 comes before the sweep line, we
+                // can process this item2 immediately. We don't have to wait
+                // for the next item in list1.
+                if item2.start <= line {
+                    // If item2 covers beyond the line, we can move the line
+                    // forward because the range line..item2.start+item2.length
+                    // is already covered.
+                    if item2.start + item2.length > line {
+                        line = item2.start + item2.length;
+                    }
+                    item2_opt = iter2.next();
+                } else {
+                    break;
+                }
+            }
+
+            // At the end of the loop, if the sweep line doesn't eat item1.
+            // We can return false immediately.
+            if line < item1.start + item1.length {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Sort all intervals in the list.
+    pub fn sort(&mut self) {
+        self.list[..self.len].sort_by(|a, b| a.unwrap().cmp(&b.unwrap()));
+    }
 }
 
 impl fmt::Debug for IntervalList {
@@ -159,15 +237,23 @@ impl fmt::Debug for IntervalList {
     }
 }
 
+impl PartialEq for IntervalList {
+    fn eq(&self, other: &IntervalList) -> bool {
+        if self.len() != other.len() {
+            return false;
+        }
+        for i in 0..self.len() {
+            if !self.list[i].unwrap().eq(&other.list[i].unwrap()) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    #[should_panic]
-    fn new_invalid_interval() {
-        Interval::new(2,1).unwrap();
-    }
 
     #[test]
     fn new_empty_interval_list() {
@@ -195,8 +281,9 @@ mod tests {
             .unwrap();
         assert_eq!(
             format!("{:x?}", interval_list),
-            "IntervalList { list: [Some(Interval { start: 1, end: 2 }), \
-Some(Interval { start: 3, end: 4 }), Some(Interval { start: 5, end: 6 })] }"
+            "IntervalList { list: [Some(Interval { start: 1, length: 1 }), \
+Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
+})] }"
         );
         assert_eq!(interval_list.len(), 3);
     }
@@ -210,8 +297,7 @@ Some(Interval { start: 3, end: 4 }), Some(Interval { start: 5, end: 6 })] }"
         assert_eq!(
             format!("{:x?}", interval_list),
             "IntervalList { list: [Some(Interval { start: fffffffffffffffe\
-, end: ffffffffffffffff }), Some(Interval { start: ffffffffffffffff, end: \
-ffffffffffffffff })] }"
+, length: 1 }), Some(Interval { start: ffffffffffffffff, length: 0 })] }"
         );
         assert_eq!(interval_list.len(), 2);
     }
@@ -231,19 +317,120 @@ ffffffffffffffff })] }"
     #[test]
     fn push_valid_interval() {
         let mut interval_list = IntervalList::new();
-        assert!(interval_list.push(Interval::new(1, 2).unwrap()).is_ok());
+        assert!(interval_list.push(Interval::new(1, 1)).is_ok());
         assert_eq!(interval_list.len(), 1);
     }
 
     #[test]
     fn push_when_full() {
         let mut interval_list = IntervalList::new();
-        assert!(interval_list.push(Interval::new(1, 2).unwrap()).is_ok());
-        assert!(interval_list.push(Interval::new(2, 3).unwrap()).is_ok());
-        assert!(interval_list.push(Interval::new(3, 4).unwrap()).is_ok());
+        assert!(interval_list.push(Interval::new(1, 1)).is_ok());
+        assert!(interval_list.push(Interval::new(2, 1)).is_ok());
+        assert!(interval_list.push(Interval::new(3, 1)).is_ok());
         assert_eq!(
-            interval_list.push(Interval::new(4, 5).unwrap()).unwrap_err(),
+            interval_list.push(Interval::new(4, 1)).unwrap_err(),
             Error::ListFull
         )
+    }
+
+    #[test]
+    fn eq_interval_list() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(1, 2)).is_ok());
+        assert!(list1.push(Interval::new(2, 2)).is_ok());
+        assert!(list2.push(Interval::new(1, 2)).is_ok());
+        assert!(list2.push(Interval::new(2, 2)).is_ok());
+
+        assert!(list1.eq(&list2));
+    }
+
+    #[test]
+    fn shuffle_neq_interval_list() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(1, 2)).is_ok());
+        assert!(list1.push(Interval::new(2, 2)).is_ok());
+        assert!(list2.push(Interval::new(2, 2)).is_ok());
+        assert!(list2.push(Interval::new(1, 2)).is_ok());
+
+        assert!(!list1.eq(&list2));
+    }
+
+    #[test]
+    fn size_neq_interval_list() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(1, 2)).is_ok());
+        assert!(list1.push(Interval::new(2, 2)).is_ok());
+        assert!(list2.push(Interval::new(1, 2)).is_ok());
+
+        assert!(!list1.eq(&list2));
+    }
+
+    #[test]
+    fn simple_cover() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(1, 2)).is_ok());
+        assert!(list1.push(Interval::new(3, 2)).is_ok());
+        assert!(list2.push(Interval::new(3, 2)).is_ok());
+        assert!(list2.push(Interval::new(1, 2)).is_ok());
+
+        assert!(list1.is_covered_by(&list2));
+    }
+
+    #[test]
+    fn simple_not_cover() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(1, 2)).is_ok());
+        assert!(list1.push(Interval::new(3, 3)).is_ok());
+        assert!(list2.push(Interval::new(3, 2)).is_ok());
+        assert!(list2.push(Interval::new(1, 2)).is_ok());
+
+        assert!(!list1.is_covered_by(&list2));
+    }
+
+    #[test]
+    fn interleave_cover() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(3, 4)).is_ok());
+        assert!(list1.push(Interval::new(10, 4)).is_ok());
+        assert!(list2.push(Interval::new(1, 4)).is_ok());
+        assert!(list2.push(Interval::new(5, 7)).is_ok());
+        assert!(list2.push(Interval::new(12, 5)).is_ok());
+
+        assert!(list1.is_covered_by(&list2));
+    }
+
+    #[test]
+    fn interleave_not_cover() {
+        let mut list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(3, 4)).is_ok());
+        assert!(list1.push(Interval::new(10, 4)).is_ok());
+        assert!(list2.push(Interval::new(5, 7)).is_ok());
+
+        assert!(!list1.is_covered_by(&list2));
+    }
+
+    #[test]
+    fn empty_coveree() {
+        let list1 = IntervalList::new();
+        let mut list2 = IntervalList::new();
+        assert!(list2.push(Interval::new(5, 7)).is_ok());
+
+        assert!(list1.is_covered_by(&list2));
+    }
+
+    #[test]
+    fn empty_coverer() {
+        let mut list1 = IntervalList::new();
+        let list2 = IntervalList::new();
+        assert!(list1.push(Interval::new(5, 7)).is_ok());
+
+        assert!(!list1.is_covered_by(&list2));
     }
 }
