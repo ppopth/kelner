@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![allow(dead_code)]
 
 //! Memory layout module. This module contains information about each section
 //! in the memory returned by the BIOS.
@@ -23,8 +22,10 @@ mod interval;
 
 use self::layout::MemoryLayout;
 
+#[cfg_attr(test, allow(dead_code))]
 static mut MEMORY_LAYOUT: Option<MemoryLayout> = None;
 
+#[cfg_attr(test, allow(dead_code))]
 /// Initialization function for the memory layout module.
 pub fn init() {
     unsafe {

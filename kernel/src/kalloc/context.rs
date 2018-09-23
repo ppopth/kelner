@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![allow(dead_code)]
 
 //! Kernel memory allocation module. This module uses slab allocation algorithm
 //! to allocate kernel memory.
