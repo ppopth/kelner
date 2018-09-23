@@ -1,7 +1,7 @@
 ENTRY(_start)
 
 SECTIONS {
-    . = @KELNER_LOADING_ADDRESS@;
+    . = @KELNER_KERNEL_CODE_START@;
     .text ALIGN (0x1000) :
     {
         *(.text)

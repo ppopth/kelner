@@ -20,14 +20,14 @@ pio_load:
     ; Print payload_start
     mov si, pio_loader_msg.payload_start
     call vga_print
-    mov rax, config.loading_addresss
+    mov rax, config.kernel_code_start
     call vga_printa
     call vga_printnl
 
     ; Print payload_end
     mov si, pio_loader_msg.payload_end
     call vga_print
-    mov rax, config.loading_addresss + (payload_end - payload_start)
+    mov rax, config.kernel_code_start + (payload_end - payload_start)
     call vga_printa
     call vga_printnl
 
@@ -40,15 +40,17 @@ pio_load:
 
     ; We need to add BSS_SIZE here because it isn't included in the
     ; payload yet.
-    mov rax, config.loading_addresss + (BSS_SIZE + payload_end - payload_start)
-    ; The range between 0x100000 and 0x8000000 is for code and data, this
-    ; means that if the payload_end is beyond 0x8000000, it will go out
-    ; of the range. We need to throw an error here.
-    mov rbx, config.kernel_heap_start
+    mov rax, config.kernel_code_start \
+        + (BSS_SIZE + payload_end - payload_start)
+    ; The range between config.kernel_code_start and config.kernel_code_end is
+    ; for code and data, this means that if the payload_end is beyond
+    ; config.kernel_code_end, it will go out of the range. We need to throw
+    ; an error here.
+    mov rbx, config.kernel_code_end
     cmp rax, rbx
     ja .out_of_range
 
-    mov rax, config.loading_addresss
+    mov rax, config.kernel_code_start
     mov [.load_address], rax
     ; 512 must already divide the size of the payload because we
     ; already pad it with zeroes.
@@ -166,7 +168,7 @@ pio_load:
 
     ; Clear BSS section.
     xor rax, rax
-    mov rdi, config.loading_addresss + bss_start - payload_start
+    mov rdi, config.kernel_code_start + bss_start - payload_start
     mov rcx, BSS_SIZE
     rep stosb
 
