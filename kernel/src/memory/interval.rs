@@ -38,6 +38,19 @@ struct Interval {
 }
 
 impl Interval {
+    /// Create [Interval](Interval) from `start` and `end`.
+    pub fn new(start: usize, end: usize) -> Result<Interval, ()> {
+        // Make sure that the start is not greater than end.
+        if start > end {
+            return Err(());
+        }
+
+        Ok(Interval {
+            start,
+            end,
+        })
+    }
+
     /// Create [Interval](Interval) from a slice. For example, `0x1-0x3`.
     pub fn from(bytes: &[u8]) -> Result<Interval, ()> {
         let mut start = None;
@@ -80,15 +93,7 @@ impl Interval {
             return Err(());
         }
 
-        // Make sure that the start is not greater than end.
-        if start.unwrap() > end.unwrap() {
-            return Err(());
-        }
-
-        Ok(Interval {
-            start: start.unwrap(),
-            end: end.unwrap(),
-        })
+        Interval::new(start.unwrap(), end.unwrap())
     }
 }
 
@@ -107,18 +112,30 @@ impl IntervalList {
         }
     }
 
+    /// Return the length of the list.
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    /// Push an interval to the list.
+    pub fn push(&mut self, interval: Interval) -> Result<(), Error> {
+        // If it is going to go beyond the size, return error.
+        if self.len >= LIST_SIZE {
+            return Err(Error::ListFull);
+        }
+        self.list[self.len] = Some(interval);
+        self.len += 1;
+        Ok(())
+    }
+
     /// Create [IntervalList](IntervalList) from a slice. For example,
     /// `0x1-0x3,0x3-0x5`.
     pub fn from(bytes: &[u8]) -> Result<IntervalList, Error> {
-        let mut list = [None; LIST_SIZE];
-        let mut len = 0;
+        let mut interval_list = IntervalList::new();
 
         // If the slice is empty, return empty IntervalList.
         if bytes.is_empty() {
-            return Ok(IntervalList {
-                list,
-                len,
-            });
+            return Ok(interval_list);
         }
 
         for interval_bytes in bytes.split(|byte| *byte == b',') {
@@ -126,18 +143,11 @@ impl IntervalList {
                 Ok(v) => v,
                 Err(_) => return Err(Error::MalformedInterval),
             };
-            // If it is going to go beyond the size, return error.
-            if len >= LIST_SIZE {
-                return Err(Error::ListFull);
-            }
-            list[len] = Some(interval);
-            len += 1;
+
+            interval_list.push(interval)?;
         }
 
-        Ok(IntervalList {
-            list,
-            len,
-        })
+        Ok(interval_list)
     }
 }
 
@@ -154,41 +164,56 @@ mod tests {
     use super::*;
 
     #[test]
+    #[should_panic]
+    fn new_invalid_interval() {
+        Interval::new(2,1).unwrap();
+    }
+
+    #[test]
     fn new_empty_interval_list() {
+        let interval_list = IntervalList::new();
         assert_eq!(
-            format!("{:?}", IntervalList::new()),
+            format!("{:?}", interval_list),
             "IntervalList { list: [] }"
         );
+        assert_eq!(interval_list.len(), 0);
     }
 
     #[test]
     fn parse_valid_empty_interval() {
+        let interval_list = IntervalList::from(b"").unwrap();
         assert_eq!(
-            format!("{:?}", IntervalList::from(b"")),
-            "Ok(IntervalList { list: [] })"
+            format!("{:?}", interval_list),
+            "IntervalList { list: [] }"
         );
+        assert_eq!(interval_list.len(), 0);
     }
 
     #[test]
     fn parse_valid_interval() {
+        let interval_list = IntervalList::from(b"0x1-0x2,0x3-0x4,0x5-0x6")
+            .unwrap();
         assert_eq!(
-            format!("{:x?}", IntervalList::from(b"0x1-0x2,0x3-0x4,0x5-0x6")),
-            "Ok(IntervalList { list: [Some(Interval { start: 1, end: 2 }), \
-Some(Interval { start: 3, end: 4 }), Some(Interval { start: 5, end: 6 })] })"
+            format!("{:x?}", interval_list),
+            "IntervalList { list: [Some(Interval { start: 1, end: 2 }), \
+Some(Interval { start: 3, end: 4 }), Some(Interval { start: 5, end: 6 })] }"
         );
+        assert_eq!(interval_list.len(), 3);
     }
 
     #[test]
     fn parse_valid_large_interval() {
-        assert_eq!(
-            format!("{:x?}", IntervalList::from(b"\
+        let interval_list = IntervalList::from(b"\
 0xfffffffffffffffe-0xffffffffffffffff,\
 0xffffffffffffffff-0xffffffffffffffff\
-")),
-            "Ok(IntervalList { list: [Some(Interval { start: fffffffffffffffe\
+").unwrap();
+        assert_eq!(
+            format!("{:x?}", interval_list),
+            "IntervalList { list: [Some(Interval { start: fffffffffffffffe\
 , end: ffffffffffffffff }), Some(Interval { start: ffffffffffffffff, end: \
-ffffffffffffffff })] })"
+ffffffffffffffff })] }"
         );
+        assert_eq!(interval_list.len(), 2);
     }
 
     #[test]
@@ -201,5 +226,24 @@ ffffffffffffffff })] })"
     fn parse_too_many_intervals() {
         assert_eq!(IntervalList::from(b"0x1-0x2,0x2-0x3,0x3-0x4,0x4-0x5")
                    .unwrap_err(), Error::ListFull);
+    }
+
+    #[test]
+    fn push_valid_interval() {
+        let mut interval_list = IntervalList::new();
+        assert!(interval_list.push(Interval::new(1, 2).unwrap()).is_ok());
+        assert_eq!(interval_list.len(), 1);
+    }
+
+    #[test]
+    fn push_when_full() {
+        let mut interval_list = IntervalList::new();
+        assert!(interval_list.push(Interval::new(1, 2).unwrap()).is_ok());
+        assert!(interval_list.push(Interval::new(2, 3).unwrap()).is_ok());
+        assert!(interval_list.push(Interval::new(3, 4).unwrap()).is_ok());
+        assert_eq!(
+            interval_list.push(Interval::new(4, 5).unwrap()).unwrap_err(),
+            Error::ListFull
+        )
     }
 }
