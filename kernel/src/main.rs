@@ -86,6 +86,10 @@ pub fn panic(info: &PanicInfo) -> ! {
     if let Some(message) = info.message() {
         println!("{}", message);
     }
+    if let Some(location) = info.location() {
+        println!("panic occurred in file '{}' at line {}", location.file(),
+            location.line());
+    }
     debug::reset_color();
     loop {}
 }
