@@ -107,13 +107,13 @@ pub fn reset_color() {
 
 #[macro_export]
 macro_rules! print {
-    ($($arg:tt)*) => ($crate::debug::write(format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::debug::write(format_args!($($arg)*)).unwrap());
 }
 
 #[macro_export]
 macro_rules! println {
     () => (print!("\n"));
     ($($arg:tt)*) => ({
-        let _ = print!("{}\n", format_args!($($arg)*));
+        print!("{}\n", format_args!($($arg)*));
     })
 }
