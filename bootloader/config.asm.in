@@ -13,7 +13,7 @@
 ;
 ; You should have received a copy of the GNU General Public License
 ; along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-
+;
 ; This file must contain only equ configuration paramters. It must not contain
 ; any code or data.
 config:
