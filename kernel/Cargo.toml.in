@@ -7,16 +7,6 @@ authors = ["@KELNER_AUTHOR_NAME@ <@KELNER_AUTHOR_EMAIL@>"]
 panic = "abort"
 
 [profile.release]
-# We cannot use any optimization in our kernel. If we do, the compiler will
-# use so many fancy things in our code. For example, on just opt-level 1,
-# the compiler may use XMM registers as we can see in the following
-# level 1 optimized code.
-# => 0x1004c0 <core::ptr::write>:	mov    0x10(%rsi),%rax
-#    0x1004c4 <core::ptr::write+4>:	mov    %rax,0x10(%rdi)
-#    0x1004c8 <core::ptr::write+8>:	movups (%rsi),%xmm0
-#    0x1004cb <core::ptr::write+11>:	movups %xmm0,(%rdi)
-#    0x1004ce <core::ptr::write+14>:	retq
-opt-level = 0
 panic = "abort"
 
 [profile.test]
