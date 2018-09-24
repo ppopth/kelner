@@ -33,8 +33,9 @@ mod config;
 #[macro_use]
 mod debug;
 mod kalloc;
-mod util;
 mod memory;
+mod paging;
+mod util;
 
 #[cfg(not(test))]
 use core::alloc::Layout;
@@ -73,6 +74,7 @@ fn init() {
     // not enough physical memory.
     memory::init();
     kalloc::init();
+    paging::init();
 }
 
 /// A function that will be called when there is a panic.

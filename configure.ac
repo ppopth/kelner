@@ -59,6 +59,22 @@ ${KELNER_KERNEL_STACK_START}-${KELNER_KERNEL_STACK_END}\
 "
 AC_SUBST(KELNER_USED_KERNEL_MEMORY)
 
+KELNER_IDENTITY_MAP_MEMORY="\
+0x0-0x100000,\
+${KELNER_USED_KERNEL_MEMORY}\
+"
+AC_SUBST(KELNER_IDENTITY_MAP_MEMORY)
+
+dnl Other parameters may be changed, but this one must not! It's not easy
+dnl to change a page size arbitrarily.
+KELNER_PAGE_SIZE="0x1000"
+AC_SUBST(KELNER_PAGE_SIZE)
+
+dnl Other parameters may be changed, but this one must not! It's not easy
+dnl to change a page size arbitrarily.
+KELNER_PAGE_SIZE_LOG="12"
+AC_SUBST(KELNER_PAGE_SIZE_LOG)
+
 dnl Other parameters may be changed, but this one must not! It's not easy
 dnl to change a page size arbitrarily.
 KELNER_BOOTLOADER_PAGE_SIZE="0x200000"

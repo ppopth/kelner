@@ -13,15 +13,17 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![cfg_attr(test, allow(dead_code))]
-#![allow(clippy::unreadable_literal)]
+#![allow(dead_code)]
 
-//! Configuration module. This module contians all configuration parameters
-//! used throughout Kelner.
+#[macro_use]
+mod macros;
+mod context;
 
-pub const KERNEL_HEAP_START: usize = @KELNER_KERNEL_HEAP_START@;
-pub const KERNEL_HEAP_END: usize = @KELNER_KERNEL_HEAP_END@;
-#[allow(dead_code)]
-pub const PAGE_SIZE: usize = @KELNER_PAGE_SIZE@;
-pub const IDENTITY_MAP_MEMORY: &[u8] = b"@KELNER_IDENTITY_MAP_MEMORY@";
-pub const USED_KERNEL_MEMORY: &[u8] = b"@KELNER_USED_KERNEL_MEMORY@";
+use self::context::PagingContext;
+
+// XXX: We should query this number from CPUID instead.
+const MAXPHYADDR: u8 = 52;
+
+pub fn init() {
+    let _ = PagingContext::new();
+}

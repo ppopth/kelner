@@ -20,8 +20,8 @@
 mod layout;
 mod interval;
 
-use self::layout::MemoryLayout;
-use self::interval::IntervalList;
+pub use self::layout::MemoryLayout;
+pub use self::interval::IntervalList;
 use ::config::USED_KERNEL_MEMORY;
 
 #[cfg_attr(test, allow(dead_code))]
