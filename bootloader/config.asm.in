@@ -20,4 +20,4 @@ config:
 .kernel_code_start:  equ @KELNER_KERNEL_CODE_START@
 .kernel_code_end:    equ @KELNER_KERNEL_CODE_END@
 .kernel_stack_end:   equ @KELNER_KERNEL_STACK_END@
-.page_size:          equ @KELNER_PAGE_SIZE@
+.page_size:          equ @KELNER_BOOTLOADER_PAGE_SIZE@

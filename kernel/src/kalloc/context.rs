@@ -31,13 +31,14 @@ use ::collections::{
 use ::config::{
     KERNEL_HEAP_START,
     KERNEL_HEAP_END,
-    PAGE_SIZE,
-    PAGE_SIZE_LOG,
 };
 
 /// The maximum slab size.
-const SLAB_SIZE: usize = PAGE_SIZE;
-const NUM_CACHES: usize = PAGE_SIZE_LOG + 1;
+#[cfg(not(test))]
+const SLAB_SIZE: usize = 0x1000;
+// Log of SLAB_SIZE + 1.
+#[cfg(not(test))]
+const NUM_CACHES: usize = 12 + 1;
 
 /// The value entry in the mapping of allocated addresses.
 struct MapEntry {
@@ -178,15 +179,15 @@ impl AllocationContext {
 
 #[cfg(test)] const KERNEL_HEAP_START: usize = ::config::KERNEL_HEAP_START;
 #[cfg(test)] const KERNEL_HEAP_END: usize = KERNEL_HEAP_START + 8;
-#[cfg(test)] const PAGE_SIZE: usize = 4;
-#[cfg(test)] const PAGE_SIZE_LOG: usize = 2;
+#[cfg(test)] const SLAB_SIZE: usize = 4;
+#[cfg(test)] const NUM_CACHES: usize = 2 + 1;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn allocate_page_size() {
+    fn allocate_slab_size() {
         let mut context = AllocationContext::new();
         let layout = Layout::from_size_align(4, 4).unwrap();
 
@@ -194,7 +195,7 @@ mod tests {
     }
 
     #[test]
-    fn allocate_beyond_page_size() {
+    fn allocate_beyond_slab_size() {
         let mut context = AllocationContext::new();
         let layout = Layout::from_size_align(8, 8).unwrap();
 
@@ -214,7 +215,7 @@ mod tests {
     }
 
     #[test]
-    fn allocate_page_size_beyond_heap() {
+    fn allocate_slab_size_beyond_heap() {
         let mut context = AllocationContext::new();
         let layout = Layout::from_size_align(4, 4).unwrap();
 

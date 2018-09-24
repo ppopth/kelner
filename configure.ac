@@ -61,13 +61,13 @@ AC_SUBST(KELNER_USED_KERNEL_MEMORY)
 
 dnl Other parameters may be changed, but this one must not! It's not easy
 dnl to change a page size arbitrarily.
-KELNER_PAGE_SIZE="0x200000"
-AC_SUBST(KELNER_PAGE_SIZE)
+KELNER_BOOTLOADER_PAGE_SIZE="0x200000"
+AC_SUBST(KELNER_BOOTLOADER_PAGE_SIZE)
 
 dnl Other parameters may be changed, but this one must not! It's not easy
 dnl to change a page size arbitrarily.
-KELNER_PAGE_SIZE_LOG="21"
-AC_SUBST(KELNER_PAGE_SIZE_LOG)
+KELNER_BOOTLOADER_PAGE_SIZE_LOG="21"
+AC_SUBST(KELNER_BOOTLOADER_PAGE_SIZE_LOG)
 
 AC_CONFIG_FILES([
   .gdbinit
