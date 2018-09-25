@@ -33,7 +33,7 @@ mod config;
 #[macro_use]
 mod debug;
 mod kalloc;
-mod memory;
+mod layout;
 mod paging;
 mod util;
 
@@ -69,10 +69,10 @@ pub extern "C" fn _start() -> ! {
 #[cfg(not(test))]
 /// Initialize everything.
 fn init() {
-    // Memory init must come before the kalloc init because kalloc uses
-    // so much stack memory and memory init can check and abort if there is
+    // Layout init must come before the kalloc init because kalloc uses
+    // so much stack memory and layout init can check and abort if there is
     // not enough physical memory.
-    memory::init();
+    layout::init();
     kalloc::init();
     paging::init();
 }

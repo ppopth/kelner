@@ -17,11 +17,10 @@
 //! Memory layout module. This module contains information about each section
 //! in the memory returned by the BIOS.
 
-mod layout;
-mod interval;
+mod memory_layout;
 
-pub use self::layout::MemoryLayout;
-pub use self::interval::IntervalList;
+pub use self::memory_layout::MemoryLayout;
+use ::collections::IntervalList;
 use ::config::USED_KERNEL_MEMORY;
 
 #[cfg_attr(test, allow(dead_code))]

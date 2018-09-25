@@ -20,8 +20,8 @@
 
 use alloc::boxed::Box;
 use alloc::collections::btree_map::BTreeMap;
+use ::collections::IntervalList;
 use ::config::IDENTITY_MAP_MEMORY;
-use ::memory::IntervalList;
 use ::paging::{assert_align, parse_addr};
 
 const NUMBER_OF_ENTRIES: usize = 2^9;

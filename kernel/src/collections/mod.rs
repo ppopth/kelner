@@ -17,10 +17,12 @@
 //! Collections module. This module contains all the collections that are
 //! used throughout the kernel.
 
+mod static_interval;
 mod static_list;
 mod static_map;
 mod static_stack;
 
+pub use self::static_interval::*;
 pub use self::static_list::*;
 pub use self::static_map::*;
 pub use self::static_stack::*;

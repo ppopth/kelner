@@ -16,7 +16,7 @@
 
 use core::slice;
 use core::fmt;
-use ::memory::interval::{Interval, IntervalList};
+use ::collections::{Interval, IntervalList};
 
 const LIST_SIZE: usize = 0x100;
 
