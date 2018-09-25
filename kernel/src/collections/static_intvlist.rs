@@ -23,7 +23,7 @@ const LIST_SIZE: usize = 0x100;
 #[cfg(test)]
 const LIST_SIZE: usize = 3;
 
-/// The error type for [IntervalList](IntervalList).
+/// The error type for [StaticIntvlist](StaticIntvlist).
 #[derive(Debug, Eq, PartialEq)]
 pub enum Error {
     MalformedInterval,
@@ -92,10 +92,10 @@ impl Interval {
     }
 }
 
-/// An iterator for [IntervalList](IntervalList).
+/// An iterator for [StaticIntvlist](StaticIntvlist).
 pub struct Iter<'a> {
     index: usize,
-    interval_list: &'a IntervalList,
+    interval_list: &'a StaticIntvlist,
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -114,15 +114,15 @@ impl<'a> Iterator for Iter<'a> {
 
 /// A static interval list which contains a list of intervals.
 #[derive(Copy, Clone)]
-pub struct IntervalList {
+pub struct StaticIntvlist {
     list: [Option<Interval>; LIST_SIZE],
     len: usize,
 }
 
-impl IntervalList {
-    /// Create an empty [IntervalList](IntervalList).
-    pub fn new() -> IntervalList {
-        IntervalList {
+impl StaticIntvlist {
+    /// Create an empty [StaticIntvlist](StaticIntvlist).
+    pub fn new() -> StaticIntvlist {
+        StaticIntvlist {
             list: [None; LIST_SIZE],
             len: 0,
         }
@@ -144,12 +144,12 @@ impl IntervalList {
         Ok(())
     }
 
-    /// Create [IntervalList](IntervalList) from a slice. For example,
+    /// Create [StaticIntvlist](StaticIntvlist) from a slice. For example,
     /// `0x1-0x3,0x3-0x5`.
-    pub fn from(bytes: &[u8]) -> Result<IntervalList, Error> {
-        let mut interval_list = IntervalList::new();
+    pub fn from(bytes: &[u8]) -> Result<StaticIntvlist, Error> {
+        let mut interval_list = StaticIntvlist::new();
 
-        // If the slice is empty, return empty IntervalList.
+        // If the slice is empty, return empty StaticIntvlist.
         if bytes.is_empty() {
             return Ok(interval_list);
         }
@@ -175,7 +175,7 @@ impl IntervalList {
     }
 
     /// Check if all intervals is covered by all intervals in the other list.
-    pub fn is_covered_by(&self, other: &IntervalList) -> bool {
+    pub fn is_covered_by(&self, other: &StaticIntvlist) -> bool {
         let mut list1 = *self;
         let mut list2 = *other;
         list1.sort();
@@ -229,16 +229,16 @@ impl IntervalList {
     }
 }
 
-impl fmt::Debug for IntervalList {
+impl fmt::Debug for StaticIntvlist {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("IntervalList")
+        fmt.debug_struct("StaticIntvlist")
             .field("list", &&self.list[..self.len])
             .finish()
     }
 }
 
-impl PartialEq for IntervalList {
-    fn eq(&self, other: &IntervalList) -> bool {
+impl PartialEq for StaticIntvlist {
+    fn eq(&self, other: &StaticIntvlist) -> bool {
         if self.len() != other.len() {
             return false;
         }
@@ -257,31 +257,31 @@ mod tests {
 
     #[test]
     fn new_empty_interval_list() {
-        let interval_list = IntervalList::new();
+        let interval_list = StaticIntvlist::new();
         assert_eq!(
             format!("{:?}", interval_list),
-            "IntervalList { list: [] }"
+            "StaticIntvlist { list: [] }"
         );
         assert_eq!(interval_list.len(), 0);
     }
 
     #[test]
     fn parse_valid_empty_interval() {
-        let interval_list = IntervalList::from(b"").unwrap();
+        let interval_list = StaticIntvlist::from(b"").unwrap();
         assert_eq!(
             format!("{:?}", interval_list),
-            "IntervalList { list: [] }"
+            "StaticIntvlist { list: [] }"
         );
         assert_eq!(interval_list.len(), 0);
     }
 
     #[test]
     fn parse_valid_interval() {
-        let interval_list = IntervalList::from(b"0x1-0x2,0x3-0x4,0x5-0x6")
+        let interval_list = StaticIntvlist::from(b"0x1-0x2,0x3-0x4,0x5-0x6")
             .unwrap();
         assert_eq!(
             format!("{:x?}", interval_list),
-            "IntervalList { list: [Some(Interval { start: 1, length: 1 }), \
+            "StaticIntvlist { list: [Some(Interval { start: 1, length: 1 }), \
 Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 })] }"
         );
@@ -290,13 +290,13 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn parse_valid_large_interval() {
-        let interval_list = IntervalList::from(b"\
+        let interval_list = StaticIntvlist::from(b"\
 0xfffffffffffffffe-0xffffffffffffffff,\
 0xffffffffffffffff-0xffffffffffffffff\
 ").unwrap();
         assert_eq!(
             format!("{:x?}", interval_list),
-            "IntervalList { list: [Some(Interval { start: fffffffffffffffe\
+            "StaticIntvlist { list: [Some(Interval { start: fffffffffffffffe\
 , length: 1 }), Some(Interval { start: ffffffffffffffff, length: 0 })] }"
         );
         assert_eq!(interval_list.len(), 2);
@@ -304,26 +304,26 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn parse_invalid_interval() {
-        assert_eq!(IntervalList::from(b"0xabk-0xfff").unwrap_err(),
+        assert_eq!(StaticIntvlist::from(b"0xabk-0xfff").unwrap_err(),
                    Error::MalformedInterval);
     }
 
     #[test]
     fn parse_too_many_intervals() {
-        assert_eq!(IntervalList::from(b"0x1-0x2,0x2-0x3,0x3-0x4,0x4-0x5")
+        assert_eq!(StaticIntvlist::from(b"0x1-0x2,0x2-0x3,0x3-0x4,0x4-0x5")
                    .unwrap_err(), Error::ListFull);
     }
 
     #[test]
     fn push_valid_interval() {
-        let mut interval_list = IntervalList::new();
+        let mut interval_list = StaticIntvlist::new();
         assert!(interval_list.push(Interval::new(1, 1)).is_ok());
         assert_eq!(interval_list.len(), 1);
     }
 
     #[test]
     fn push_when_full() {
-        let mut interval_list = IntervalList::new();
+        let mut interval_list = StaticIntvlist::new();
         assert!(interval_list.push(Interval::new(1, 1)).is_ok());
         assert!(interval_list.push(Interval::new(2, 1)).is_ok());
         assert!(interval_list.push(Interval::new(3, 1)).is_ok());
@@ -335,8 +335,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn eq_interval_list() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(1, 2)).is_ok());
         assert!(list1.push(Interval::new(2, 2)).is_ok());
         assert!(list2.push(Interval::new(1, 2)).is_ok());
@@ -347,8 +347,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn shuffle_neq_interval_list() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(1, 2)).is_ok());
         assert!(list1.push(Interval::new(2, 2)).is_ok());
         assert!(list2.push(Interval::new(2, 2)).is_ok());
@@ -359,8 +359,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn size_neq_interval_list() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(1, 2)).is_ok());
         assert!(list1.push(Interval::new(2, 2)).is_ok());
         assert!(list2.push(Interval::new(1, 2)).is_ok());
@@ -370,8 +370,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn simple_cover() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(1, 2)).is_ok());
         assert!(list1.push(Interval::new(3, 2)).is_ok());
         assert!(list2.push(Interval::new(3, 2)).is_ok());
@@ -382,8 +382,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn simple_not_cover() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(1, 2)).is_ok());
         assert!(list1.push(Interval::new(3, 3)).is_ok());
         assert!(list2.push(Interval::new(3, 2)).is_ok());
@@ -394,8 +394,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn interleave_cover() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(3, 4)).is_ok());
         assert!(list1.push(Interval::new(10, 4)).is_ok());
         assert!(list2.push(Interval::new(1, 4)).is_ok());
@@ -407,8 +407,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn interleave_not_cover() {
-        let mut list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(3, 4)).is_ok());
         assert!(list1.push(Interval::new(10, 4)).is_ok());
         assert!(list2.push(Interval::new(5, 7)).is_ok());
@@ -418,8 +418,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn empty_coveree() {
-        let list1 = IntervalList::new();
-        let mut list2 = IntervalList::new();
+        let list1 = StaticIntvlist::new();
+        let mut list2 = StaticIntvlist::new();
         assert!(list2.push(Interval::new(5, 7)).is_ok());
 
         assert!(list1.is_covered_by(&list2));
@@ -427,8 +427,8 @@ Some(Interval { start: 3, length: 1 }), Some(Interval { start: 5, length: 1 \
 
     #[test]
     fn empty_coverer() {
-        let mut list1 = IntervalList::new();
-        let list2 = IntervalList::new();
+        let mut list1 = StaticIntvlist::new();
+        let list2 = StaticIntvlist::new();
         assert!(list1.push(Interval::new(5, 7)).is_ok());
 
         assert!(!list1.is_covered_by(&list2));

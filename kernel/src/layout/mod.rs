@@ -20,7 +20,7 @@
 mod memory_layout;
 
 pub use self::memory_layout::MemoryLayout;
-use ::collections::IntervalList;
+use ::collections::StaticIntvlist;
 use ::config::USED_KERNEL_MEMORY;
 
 #[cfg_attr(test, allow(dead_code))]
@@ -28,7 +28,7 @@ use ::config::USED_KERNEL_MEMORY;
 pub fn init() {
     let memory_layout = MemoryLayout::new();
     let free_memory_list = memory_layout.as_free_interval_list();
-    let used_memory_list = IntervalList::from(USED_KERNEL_MEMORY).unwrap();
+    let used_memory_list = StaticIntvlist::from(USED_KERNEL_MEMORY).unwrap();
 
     if !used_memory_list.is_covered_by(&free_memory_list) {
         panic!("the memory layout is invalid this system cannot use Kelner");

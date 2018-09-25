@@ -68,7 +68,7 @@ struct Cache {
 
 /// This structure will contains everything the kernel needs to know for
 /// kernel memory allocation.
-pub struct AllocationContext {
+pub struct AllocContext {
     // This is a mapping between the address and the cache entry.
     addr_map: StaticMap<NonZeroUsize, MapEntry>,
     // List of caches.
@@ -82,11 +82,11 @@ pub struct AllocationContext {
 
 /// Since currently we assume that there is only one core that can use this
 /// allocation module, we can safely let this implement Sync.
-unsafe impl Sync for AllocationContext {}
+unsafe impl Sync for AllocContext {}
 
-impl AllocationContext {
-    /// Create an empty [AllocationContext](AllocationContext).
-    pub fn new() -> AllocationContext {
+impl AllocContext {
+    /// Create an empty [AllocContext](AllocContext).
+    pub fn new() -> AllocContext {
         let caches = unsafe {
             let mut array: [Cache; NUM_CACHES] = mem::uninitialized();
             for elem in &mut array {
@@ -97,7 +97,7 @@ impl AllocationContext {
             }
             array
         };
-        AllocationContext {
+        AllocContext {
             addr_map: StaticMap::new(),
             caches,
             next_slab_addr: NonZeroUsize::new(KERNEL_HEAP_START).unwrap(),
@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn allocate_slab_size() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(4, 4).unwrap();
 
         assert!(context.alloc(layout).is_ok());
@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn allocate_beyond_slab_size() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(8, 8).unwrap();
 
         assert_eq!(context.alloc(layout).unwrap_err(), AllocErr);
@@ -204,7 +204,7 @@ mod tests {
 
     #[test]
     fn allocate_beyond_heap() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(2, 2).unwrap();
 
         assert!(context.alloc(layout).is_ok());
@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn allocate_slab_size_beyond_heap() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(4, 4).unwrap();
 
         assert!(context.alloc(layout).is_ok());
@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn allocate_different_sizes() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout1 = Layout::from_size_align(2, 2).unwrap();
         let layout2 = Layout::from_size_align(2, 4).unwrap();
         let layout3 = Layout::from_size_align(1, 1).unwrap();
@@ -240,7 +240,7 @@ mod tests {
 
     #[test]
     fn different_valid_allocated_addresses() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(2, 2).unwrap();
         let mut output: [*mut u8; 4] = [ptr::null_mut(); 4];
         let mut expected: [*mut u8; 4] = [ptr::null_mut(); 4];
@@ -258,7 +258,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn dealloc_non_allocated_address() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(1, 1).unwrap();
 
         // This should return error.
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn dealloc_alternate_with_alloc() {
-        let mut context = AllocationContext::new();
+        let mut context = AllocContext::new();
         let layout = Layout::from_size_align(2, 2).unwrap();
 
         let a1 = context.alloc(layout).unwrap();

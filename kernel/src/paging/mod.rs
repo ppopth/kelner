@@ -20,10 +20,10 @@
 
 #[macro_use]
 mod macros;
-mod context;
+mod paging_context;
 
 use config::PAGE_SIZE;
-use self::context::PagingContext;
+use self::paging_context::PagingContext;
 
 // XXX: We should query this number from CPUID instead.
 const MAXPHYADDR: u8 = 52;

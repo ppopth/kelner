@@ -17,7 +17,7 @@
 //! Allocation module. This module is currently about kernel
 //! memory allocation.
 
-mod context;
+mod alloc_context;
 #[cfg(not(test))]
 mod allocator;
 
@@ -25,15 +25,15 @@ mod allocator;
 pub use self::allocator::Allocator;
 
 #[cfg(not(test))]
-use self::context::*;
+use self::alloc_context::*;
 
 #[cfg(not(test))]
-static mut CONTEXT: Option<AllocationContext> = None;
+static mut CONTEXT: Option<AllocContext> = None;
 
 /// Initialization function for the entire kernel memory allocation module.
 #[cfg(not(test))]
 pub fn init() {
     unsafe {
-        CONTEXT = Some(AllocationContext::new());
+        CONTEXT = Some(AllocContext::new());
     }
 }

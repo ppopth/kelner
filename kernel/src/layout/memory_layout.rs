@@ -16,7 +16,7 @@
 
 use core::slice;
 use core::fmt;
-use ::collections::{Interval, IntervalList};
+use ::collections::{Interval, StaticIntvlist};
 
 const LIST_SIZE: usize = 0x100;
 
@@ -68,10 +68,10 @@ pub struct MemoryLayout {
 }
 
 impl MemoryLayout {
-    /// Return [IntervalList](IntervalList) of all free memory entries.
+    /// Return [StaticIntvlist](StaticIntvlist) of all free memory entries.
     #[cfg_attr(not(test), allow(dead_code))]
-    pub fn as_free_interval_list(&self) -> IntervalList {
-        let mut interval_list = IntervalList::new();
+    pub fn as_free_interval_list(&self) -> StaticIntvlist {
+        let mut interval_list = StaticIntvlist::new();
 
         for item in self.list.iter().take(self.len) {
             let item = item.unwrap();
@@ -136,7 +136,7 @@ mod tests {
         let memory_layout = MemoryLayout::new();
         let out_list = memory_layout.as_free_interval_list();
 
-        let mut expected_list = IntervalList::new();
+        let mut expected_list = StaticIntvlist::new();
         expected_list.push(Interval::new(0x0000_0000, 0x0009_fc00)).unwrap();
         expected_list.push(Interval::new(0x0010_0000, 0x07ee_0000)).unwrap();
         assert_eq!(out_list, expected_list);

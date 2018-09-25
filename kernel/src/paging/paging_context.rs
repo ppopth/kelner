@@ -20,7 +20,7 @@
 
 use alloc::boxed::Box;
 use alloc::collections::btree_map::BTreeMap;
-use ::collections::IntervalList;
+use ::collections::StaticIntvlist;
 use ::config::IDENTITY_MAP_MEMORY;
 use ::paging::{assert_align, parse_addr};
 
@@ -247,7 +247,7 @@ impl PagingContext {
         };
 
         // Initialize identity map memory sections.
-        let _intervals = IntervalList::from(IDENTITY_MAP_MEMORY);
+        let _intervals = StaticIntvlist::from(IDENTITY_MAP_MEMORY);
 
         context
     }
