@@ -15,6 +15,9 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(dead_code)]
 
+//! Paging module. This module contains functions and structures used in
+//! paging mechanism.
+
 #[macro_use]
 mod macros;
 mod context;
@@ -44,6 +47,7 @@ pub fn parse_addr(addr: usize) -> [usize; 4] {
     result
 }
 
+/// Initialization function for paging module.
 pub fn init() {
     let _ = PagingContext::new();
 }

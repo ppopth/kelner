@@ -15,15 +15,14 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(dead_code)]
 
+//! A paging context used in context switching. This structure uses multiple
+//! level paging mechanism.
+
 use alloc::boxed::Box;
 use alloc::collections::btree_map::BTreeMap;
 use ::config::IDENTITY_MAP_MEMORY;
 use ::memory::IntervalList;
-#[cfg(not(test))]
-use ::paging::MAXPHYADDR;
 use ::paging::{assert_align, parse_addr};
-#[cfg(not(test))]
-use ::util::set_bits;
 
 const NUMBER_OF_ENTRIES: usize = 2^9;
 
@@ -59,37 +58,103 @@ pub struct PagingContext {
     // A value that will loaded to CR3 when this paging context is used.
     cr3: u64,
     // A root page directory. This is PML4 in x86.
-    directory: PageDirectory,
+    dirtab: PageDirTab,
 }
 
 impl PagingContext {
     /// Find a physical address of the frame that is mapped by virtual address
     /// `virt_addr`.
     pub fn find(&self, virt_addr: usize) -> Option<usize> {
-        let mut page_directory = &self.directory;
         let page_table;
 
         // Assert that the address is page aligned.
         assert_align(virt_addr);
-
         let indices = parse_addr(virt_addr);
         let mut i = 0;
-        loop {
-            // Traverse through the paging tree until we find the leave,
-            // that is a page table.
-            match page_directory.map.get(&indices[i])? {
-                Directory(ref directory) => page_directory = directory,
-                Table(ref table) => {
-                    page_table = table;
-                    break;
+
+        match self.dirtab {
+            Directory(ref directory_) => {
+                // We move the variable here because we cannot make
+                // `directory_` mutable.
+                let mut directory = directory_;
+                loop {
+                    // Traverse through the paging tree until we find the
+                    // leave, that is a page table.
+                    match directory.map.get(&indices[i])? {
+                        Directory(ref dir) => directory = dir,
+                        Table(ref tab) => {
+                            page_table = tab;
+                            break;
+                        }
+                    }
+                    i += 1;
                 }
-            }
-            i += 1;
+                i += 1;
+            },
+            Table(ref table) => page_table = table,
         }
-        i += 1;
 
         // Return the physical address mapped by virt_addr in the page table.
         Some(*page_table.map.get(&indices[i])?)
+    }
+
+    /// Unmap a page at virtual address `virt_addr`. Return the physical
+    /// address previously mapped by that `virt_addr`, if success.
+    pub fn remove(&mut self, virt_addr: usize) -> Result<usize, ()> {
+        // Assert that the address is page aligned.
+        assert_align(virt_addr);
+        let indices = parse_addr(virt_addr);
+
+        // This closure is used to traverse through the tree. It returns
+        // the physical address, if success.
+        fn traverse (dirtab: &mut PageDirTab, indices: &[usize])
+            -> Result<usize, ()> {
+            match dirtab {
+                Directory(directory) => {
+                    let is_next_node_empty;
+                    let result;
+                    // We need a block here because, otherwise, there will be
+                    // two mutable references to `directory.map`.
+                    {
+                        // If the current node is a directory, check if we can
+                        // go to the next level.
+                        let next_dirtab = directory.map.get_mut(&indices[0]);
+                        // If we cannot go, just return error.
+                        if next_dirtab.is_none() {
+                            return Err(());
+                        }
+                        let next_dirtab = next_dirtab.unwrap();
+
+                        // If there is another level, traverse through it.
+                        result = traverse(
+                            next_dirtab,
+                            &indices[1..],
+                        )?;
+
+                        // After traversing through the next level, we need to
+                        // check that the next level node is already empty or
+                        // not. If it is, we should deallocate `next_dirtab`.
+                        is_next_node_empty = match next_dirtab {
+                            Directory(dir) => dir.map.is_empty(),
+                            Table(tab) => tab.map.is_empty(),
+                        };
+                    }
+
+                    if is_next_node_empty {
+                        directory.map.remove(&indices[0]).unwrap();
+                    }
+                    Ok(result)
+                },
+                Table(table) => {
+                    let phy_addr = table.map.remove(&indices[0]);
+                    match phy_addr {
+                        Some(phy_addr) => Ok(phy_addr),
+                        None => Err(()),
+                    }
+                },
+            }
+        };
+        traverse(&mut self.dirtab, &indices[..])
     }
 
     /// Map a page at virtual address `virt_addr` to a frame at physical
@@ -109,7 +174,11 @@ impl PagingContext {
         // Create two level page directory, that is PDPT and PD in x86.
         let indices = parse_addr(virt_addr);
         let mut i = 0;
-        let mut page_directory = &mut self.directory;
+        let mut page_directory = match self.dirtab {
+            Directory(ref mut dir) => &mut **dir,
+            Table(_) => panic!("the first level shouldn't be the table"),
+        };
+
         for _ in 0..2 {
             if page_directory.map.get(&indices[i]).is_none() {
                 // If the page directory does not exist create a new one.
@@ -172,17 +241,9 @@ impl PagingContext {
         // We need to avoid setting .address in test because the address of
         // the blod in test is beyond the size of configured physical
         // address space.
-        let cr3 = {
-            #[cfg(not(test))]
-            cr3! {
-                .address = &*directory.blob as *const _ as u64
-            }
-            #[cfg(test)]
-            0
-        };
         let context = PagingContext {
-            cr3,
-            directory,
+            cr3: 0,
+            dirtab: Directory(Box::new(directory)),
         };
 
         // Initialize identity map memory sections.
@@ -200,7 +261,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn correctly_insert() {
+    fn correctly_insert_page() {
         let mut context = PagingContext::new();
         let vir_addr1 = 4 * PAGE_SIZE;
         let phy_addr1 = 5 * PAGE_SIZE;
@@ -213,5 +274,65 @@ mod tests {
         assert!(context.find(vir_addr2).is_none());
         assert!(context.insert(vir_addr2, phy_addr2).is_ok());
         assert_eq!(context.find(vir_addr2).unwrap(), phy_addr2);
+    }
+
+    #[test]
+    fn insert_present_page() {
+        let mut context = PagingContext::new();
+        let vir_addr = 4 * PAGE_SIZE;
+        let phy_addr1 = 5 * PAGE_SIZE;
+        let phy_addr2 = 6 * PAGE_SIZE;
+        assert!(context.insert(vir_addr, phy_addr1).is_ok());
+        assert!(context.insert(vir_addr, phy_addr2).is_err());
+    }
+
+    #[test]
+    fn insert_present_page_with_same_phy_addr() {
+        let mut context = PagingContext::new();
+        let vir_addr = 4 * PAGE_SIZE;
+        let phy_addr = 5 * PAGE_SIZE;
+        assert!(context.insert(vir_addr, phy_addr).is_ok());
+        assert!(context.insert(vir_addr, phy_addr).is_err());
+    }
+
+    #[test]
+    fn find_absent_page() {
+        let mut context = PagingContext::new();
+        let vir_addr1 = 4 * PAGE_SIZE;
+        let vir_addr2 = 5 * PAGE_SIZE;
+        let phy_addr = 6 * PAGE_SIZE;
+        assert!(context.insert(vir_addr1, phy_addr).is_ok());
+        assert!(context.find(vir_addr2).is_none());
+    }
+
+    #[test]
+    fn correctly_remove_page() {
+        let mut context = PagingContext::new();
+        let vir_addr1 = 4 * PAGE_SIZE;
+        let phy_addr1 = 5 * PAGE_SIZE;
+        let vir_addr2 = 2 * PAGE_SIZE;
+        let phy_addr2 = 6 * PAGE_SIZE;
+        assert!(context.insert(vir_addr1, phy_addr1).is_ok());
+        assert!(context.insert(vir_addr2, phy_addr2).is_ok());
+        assert_eq!(context.remove(vir_addr1).unwrap(), phy_addr1);
+        assert!(context.find(vir_addr1).is_none());
+        assert!(context.find(vir_addr2).is_some());
+        assert!(context.insert(vir_addr1, phy_addr1).is_ok());
+        assert!(context.find(vir_addr1).is_some());
+        assert!(context.find(vir_addr2).is_some());
+        assert_eq!(context.remove(vir_addr1).unwrap(), phy_addr1);
+        assert_eq!(context.remove(vir_addr2).unwrap(), phy_addr2);
+        assert!(context.find(vir_addr1).is_none());
+        assert!(context.find(vir_addr2).is_none());
+    }
+
+    #[test]
+    fn remove_absent_page() {
+        let mut context = PagingContext::new();
+        let vir_addr1 = 4 * PAGE_SIZE;
+        let vir_addr2 = 5 * PAGE_SIZE;
+        let phy_addr = 6 * PAGE_SIZE;
+        assert!(context.insert(vir_addr1, phy_addr).is_ok());
+        assert!(context.remove(vir_addr2).is_err());
     }
 }
