@@ -21,7 +21,6 @@
 
 pub const KERNEL_HEAP_START: usize = @KELNER_KERNEL_HEAP_START@;
 pub const KERNEL_HEAP_END: usize = @KELNER_KERNEL_HEAP_END@;
-#[allow(dead_code)]
 pub const PAGE_SIZE: usize = @KELNER_PAGE_SIZE@;
 pub const IDENTITY_MAP_MEMORY: &[u8] = b"@KELNER_IDENTITY_MAP_MEMORY@";
 pub const USED_KERNEL_MEMORY: &[u8] = b"@KELNER_USED_KERNEL_MEMORY@";

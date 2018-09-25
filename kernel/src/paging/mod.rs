@@ -19,10 +19,30 @@
 mod macros;
 mod context;
 
+use config::PAGE_SIZE;
 use self::context::PagingContext;
 
 // XXX: We should query this number from CPUID instead.
 const MAXPHYADDR: u8 = 52;
+
+/// Make sure that the address is page aligned.
+pub fn assert_align(addr: usize) {
+    if addr & (PAGE_SIZE-1) != 0 {
+        panic!("the address must be page aligned");
+    }
+}
+
+/// Parse the virtual address to get indices of page directories and
+/// page tables.
+pub fn parse_addr(addr: usize) -> [usize; 4] {
+    let mut result = [0; 4];
+    assert!(addr >> 48 == 0);
+    result[0] = (addr & ((1 << 48)-1)) >> 39;
+    result[1] = (addr & ((1 << 39)-1)) >> 30;
+    result[2] = (addr & ((1 << 30)-1)) >> 21;
+    result[3] = (addr & ((1 << 21)-1)) >> 12;
+    result
+}
 
 pub fn init() {
     let _ = PagingContext::new();
