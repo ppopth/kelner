@@ -24,7 +24,7 @@ CLEANFILES = build $(TARGETDIR)
 DEEPCLEANFILES = .bin
 DISTCLEANFILES = @KELNER_CONFIG_FILES@ config.log config.status
 TARGET = $(ARCH)-unknown-none
-STANDARD_LIBS = core compiler_builtins alloc
+STANDARD_LIBS = alloc
 CUSTOMIZED_CARGO = .bin/cargo
 CUSTOMIZED_CARGO_CMD = RUSTUP_TOOLCHAIN=$(shell cat rust-toolchain) \
 	$(CUSTOMIZED_CARGO)

@@ -18,9 +18,7 @@
 #![feature(alloc_error_handler)]
 #![feature(doc_cfg)]
 #![feature(lang_items)]
-#![feature(panic_handler)]
 #![feature(panic_info_message)]
-#![feature(tool_lints)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 

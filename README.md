@@ -19,7 +19,7 @@ git submodule update --init --recursive
 Install some dependencies, x86 Qemu, and Rust compiler.
 ```
 sudo apt-get update
-sudo apt-get install curl nasm qemu-system-x86 build-essential
+sudo apt-get install autoconf libssl-dev pkg-config curl nasm qemu-system-x86 build-essential
 curl https://sh.rustup.rs -sSf | sh
 source $HOME/.cargo/env
 ```

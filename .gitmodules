@@ -4,5 +4,5 @@
 	url = https://github.com/haxxpop/cargo.git
 [submodule "rust"]
 	path = rust
-	branch = kelner
-	url = https://github.com/haxxpop/rust.git
+	branch = master
+	url = https://github.com/rust-lang/rust.git
