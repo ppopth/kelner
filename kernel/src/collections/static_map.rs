@@ -15,7 +15,6 @@
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
 #![cfg_attr(not(test), allow(dead_code))]
 
-use core::num::NonZeroUsize;
 use core::hash::Hasher;
 use core::{mem, ptr};
 use siphasher::sip::SipHasher;
@@ -46,10 +45,10 @@ impl HashU64 for u64 {
     }
 }
 
-impl HashU64 for NonZeroUsize {
+impl HashU64 for usize {
     fn hash(&self) -> u64 {
         let mut hasher = SipHasher::new();
-        hasher.write_u64(self.get() as u64);
+        hasher.write_usize(*self);
         hasher.finish()
     }
 }

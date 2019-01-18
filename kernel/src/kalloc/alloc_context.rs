@@ -18,7 +18,6 @@
 //! to allocate kernel memory.
 
 use core::alloc::{AllocErr, Layout};
-use core::num::NonZeroUsize;
 use core::{ptr, mem};
 use ::util::lg;
 use ::collections::{
@@ -54,7 +53,7 @@ struct CacheEntry {
     // data. Since this is an allocation module for the kernel memory and we
     // have an identity mapping between virtual addresses and physical
     // addresses, this address will always be the same as the virtual address.
-    phy_addr: NonZeroUsize,
+    phy_addr: usize,
 }
 
 /// This is a cache for keeping free objects and allocated objects. There will
@@ -70,14 +69,14 @@ struct Cache {
 /// kernel memory allocation.
 pub struct AllocContext {
     // This is a mapping between the address and the cache entry.
-    addr_map: StaticMap<NonZeroUsize, MapEntry>,
+    addr_map: StaticMap<usize, MapEntry>,
     // List of caches.
     caches: [Cache; NUM_CACHES],
     // The next slab address that we can use. Note that this variable will
     // only increase because currently we assume that we can allocate slabs
     // but we cannot deallocate slab. If we want to deallocate slabs, we can
     // improve it later.
-    next_slab_addr: NonZeroUsize,
+    next_slab_addr: usize,
 }
 
 /// Since currently we assume that there is only one core that can use this
@@ -100,7 +99,7 @@ impl AllocContext {
         AllocContext {
             addr_map: StaticMap::new(),
             caches,
-            next_slab_addr: NonZeroUsize::new(KERNEL_HEAP_START).unwrap(),
+            next_slab_addr: KERNEL_HEAP_START,
         }
     }
 
@@ -119,7 +118,7 @@ impl AllocContext {
 
         // If we are going beyond the heap section, return error.
         if free_stack.len() == 0
-            && self.next_slab_addr.get() >= KERNEL_HEAP_END {
+            && self.next_slab_addr >= KERNEL_HEAP_END {
             return Err(AllocErr);
         }
 
@@ -130,17 +129,13 @@ impl AllocContext {
             // Add SLAB_SIZE/size entries to the free stack.
             for i in 0..SLAB_SIZE/size {
                 // The address of ith entry of the slab.
-                let phy_addr = NonZeroUsize::new(
-                    i * size + self.next_slab_addr.get()
-                ).unwrap();
+                let phy_addr = i * size + self.next_slab_addr;
 
                 free_stack.push(CacheEntry { phy_addr }).unwrap();
             }
 
             // Move next_slab_addr to the next available slab.
-            self.next_slab_addr = NonZeroUsize::new(
-                self.next_slab_addr.get() + SLAB_SIZE
-            ).unwrap();
+            self.next_slab_addr += SLAB_SIZE;
         }
 
         // Get a free entry from the stack.
@@ -154,12 +149,12 @@ impl AllocContext {
             cache_entry: list_ref,
         }).unwrap();
 
-        Ok(addr.get() as *mut _)
+        Ok(addr as *mut _)
     }
 
     /// Deallocate a kernel memory using a ptr and layout.
     pub fn dealloc(&mut self, ptr: *mut u8, _: Layout) -> Result<(), ()> {
-        let addr = NonZeroUsize::new(ptr as usize).unwrap();
+        let addr = ptr as usize;
         let map_entry = self.addr_map.remove(addr)?;
 
         // Create new variables to make the code shorter.

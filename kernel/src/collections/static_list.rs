@@ -18,7 +18,6 @@
 use core::ptr::NonNull;
 use core::{mem, ptr};
 use ::util::WeakRng;
-use ::util::Usize;
 
 /// The static size of the linked list.
 #[cfg(not(test))]
@@ -37,18 +36,16 @@ struct StaticListElement<T> {
     // The item that this element contains.
     item: T,
     // The link to the previous element.
-    prev: Option<Usize>,
+    prev: Option<usize>,
     // The link to the next element.
-    next: Option<Usize>,
+    next: Option<usize>,
 }
 
 /// A reference used by external users to reference items in the list.
-// You can see that the index here is Usize, because, if so, the size of
-// StaticListElement can be easily optimized.
 #[derive(Debug, Eq, PartialEq)]
 pub struct StaticListRef<T> {
     // The index to which this reference is referring to.
-    index: Usize,
+    index: usize,
     // The address of the list to which this reference belongs to. At the first
     // glance, you may think that this reference may refer to two different
     // lists, if you allocate a new list located at the same address of the
@@ -66,7 +63,7 @@ pub struct StaticList<T> {
     // The number generator for finding an empty slot.
     wrng: WeakRng,
     // The head index of the list.
-    head: Option<Usize>,
+    head: Option<usize>,
     // The length of the list.
     len: usize,
 }
@@ -124,7 +121,7 @@ impl<T> StaticList<T>
         self.assert_ref(&refer);
 
         let (elem_prev, elem_next) = {
-            let element = self.buf[refer.index.get()].as_ref().unwrap();
+            let element = self.buf[refer.index].as_ref().unwrap();
             if let Some(v) = self.head {
                 // This means that we are trying to remove the head of
                 // the list.
@@ -137,15 +134,15 @@ impl<T> StaticList<T>
 
         // Fix the linking chain.
         if let Some(prev) = elem_prev {
-            self.buf[prev.get()].as_mut().unwrap().next = elem_next;
+            self.buf[prev].as_mut().unwrap().next = elem_next;
         }
         if let Some(next) = elem_next {
-            self.buf[next.get()].as_mut().unwrap().prev = elem_prev;
+            self.buf[next].as_mut().unwrap().prev = elem_prev;
         }
 
         // Decrease the length of the list.
         self.len -= 1;
-        let index = refer.index.get();
+        let index = refer.index;
         mem::drop(refer);
 
         // Remove the element from the list and return the item inside.
@@ -156,14 +153,14 @@ impl<T> StaticList<T>
     pub fn get(&self, refer: &StaticListRef<T>) -> &T {
         self.assert_ref(refer);
 
-        &self.buf[refer.index.get()].as_ref().unwrap().item
+        &self.buf[refer.index].as_ref().unwrap().item
     }
 
     /// Pust a new element in front of the list.
     pub fn push(&mut self, item: T) -> Result<StaticListRef<T>, Error>
     {
         // Find a new empty slot in the list.
-        let new_slot_index = Usize::new(self.find_empty_slot()?);
+        let new_slot_index = self.find_empty_slot()?;
 
         // If the list is not full, we can create a new list element
         // containing a parameter item.
@@ -179,7 +176,7 @@ impl<T> StaticList<T>
                 // Link a new element to an old element.
                 new_element.next = Some(v);
                 // Link an old element to a new element.
-                let head_item = self.buf[v.get()].as_mut().unwrap();
+                let head_item = self.buf[v].as_mut().unwrap();
                 head_item.prev = Some(new_slot_index);
 
                 Some(new_slot_index)
@@ -190,7 +187,7 @@ impl<T> StaticList<T>
         // Increase the length.
         self.len += 1;
 
-        self.buf[new_slot_index.get()] = Some(new_element);
+        self.buf[new_slot_index] = Some(new_element);
 
         Ok(StaticListRef {
             index: new_slot_index,
