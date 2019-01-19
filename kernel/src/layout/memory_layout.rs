@@ -69,7 +69,6 @@ pub struct MemoryLayout {
 
 impl MemoryLayout {
     /// Return [StaticIntvlist](StaticIntvlist) of all free memory entries.
-    #[cfg_attr(not(test), allow(dead_code))]
     pub fn as_free_interval_list(&self) -> StaticIntvlist {
         let mut interval_list = StaticIntvlist::new();
 

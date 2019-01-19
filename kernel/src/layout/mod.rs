@@ -23,8 +23,8 @@ pub use self::memory_layout::MemoryLayout;
 use ::collections::StaticIntvlist;
 use ::config::USED_KERNEL_MEMORY;
 
-#[cfg_attr(test, allow(dead_code))]
 /// Initialization function for the memory layout module.
+#[cfg_attr(test, allow(dead_code))]
 pub fn init() {
     let memory_layout = MemoryLayout::new();
     let free_memory_list = memory_layout.as_free_interval_list();

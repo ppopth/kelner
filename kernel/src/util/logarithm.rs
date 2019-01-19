@@ -17,7 +17,6 @@
 use core::ops;
 
 /// Apply logarithm base two.
-#[allow(dead_code)]
 pub fn lg<T>(mut val: T) -> Result<T, ()>
     where T: Copy + From<u8> + PartialOrd
              + ops::ShrAssign + ops::BitAnd<Output=T>

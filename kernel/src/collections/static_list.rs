@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![cfg_attr(not(test), allow(dead_code))]
 
 use core::ptr::NonNull;
 use core::{mem, ptr};
@@ -112,6 +111,7 @@ impl<T> StaticList<T>
     }
 
     /// Return the length of the list.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn len(&self) -> usize {
        self.len
     }

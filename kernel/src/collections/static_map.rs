@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
-#![cfg_attr(not(test), allow(dead_code))]
 
 use core::hash::Hasher;
 use core::{mem, ptr};
@@ -91,12 +90,14 @@ impl<K, V> StaticMap<K, V>
     }
 
     /// Return the number of elements in the map.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn len(&self) -> usize {
         self.len
     }
 
     /// Find a key in the map. If it can find, return the value of the entry.
     /// Otherwise, return [None](None).
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn find(&self, key: K) -> Option<&V> {
         self.find_idx(key).map(|idx| &self.ht[idx].as_ref().unwrap().value)
     }
