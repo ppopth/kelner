@@ -1,5 +1,6 @@
+set arch i386:x86-64:intel
 target remote localhost:1234
-file target/@KELNER_ARCH@-unknown-none/debug/kernel
+symbol-file target/@KELNER_ARCH@-unknown-none/debug/kernel
 define ri
   x/10i $rip
 end
