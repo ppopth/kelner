@@ -13,9 +13,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Kelner.  If not, see <https://www.gnu.org/licenses/>.
+#![feature(abi_x86_interrupt)]
 #![feature(alloc)]
 #![feature(allocator_api)]
 #![feature(alloc_error_handler)]
+#![feature(asm)]
 #![feature(doc_cfg)]
 #![feature(lang_items)]
 #![feature(panic_info_message)]
@@ -30,9 +32,11 @@ mod config;
 #[cfg(not(test))]
 #[macro_use]
 mod debug;
+mod interrupt;
 mod kalloc;
 mod layout;
 mod paging;
+mod syscall;
 mod util;
 
 #[cfg(not(test))]
@@ -61,7 +65,17 @@ pub extern "C" fn _start() -> ! {
     init();
     println!("Hello World!");
     println!("My name is Kelner.");
+    run();
     loop {}
+}
+
+#[cfg(not(test))]
+fn run() {
+    println!("Before interrupt.");
+    unsafe {
+      asm!("int $$0x80");
+    }
+    println!("After interrupt.");
 }
 
 #[cfg(not(test))]
@@ -73,6 +87,7 @@ fn init() {
     layout::init();
     kalloc::init();
     paging::init();
+    interrupt::init();
 }
 
 /// A function that will be called when there is a panic.
