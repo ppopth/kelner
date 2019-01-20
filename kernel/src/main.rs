@@ -35,6 +35,7 @@ mod debug;
 mod interrupt;
 mod kalloc;
 mod layout;
+mod loader;
 mod paging;
 mod syscall;
 mod util;
