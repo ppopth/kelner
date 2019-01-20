@@ -25,7 +25,7 @@ mod paging_context;
 use config::PAGE_SIZE;
 use self::paging_context::PagingContext;
 
-// XXX: We should query this number from CPUID instead.
+// TODO: We should query this number from CPUID instead.
 const MAXPHYADDR: u8 = 52;
 
 /// Make sure that the address is page aligned.

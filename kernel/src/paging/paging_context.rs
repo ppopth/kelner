@@ -246,7 +246,7 @@ impl PagingContext {
             dirtab: Directory(Box::new(directory)),
         };
 
-        // Initialize identity map memory sections.
+        // TODO: Initialize identity map memory sections.
         let _intervals = StaticIntvlist::from(IDENTITY_MAP_MEMORY);
 
         context
