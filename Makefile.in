@@ -87,9 +87,15 @@ privdoc:
 		--manifest-path $(MANIFESTPATH) \
 		--target-dir $(TARGETDIR)
 
-build/disk: build/kernel bootloader/*
+build/packages/sample_elf: packages/sample_elf.c
+	mkdir -p build/packages
+	gcc -std=c99 -static -O0 packages/sample_elf.c \
+		-o build/packages/sample_elf
+
+build/disk: build/kernel build/packages/sample_elf bootloader/*
 	mkdir -p build
 	nasm $(NASMFLAGS) -o $@ \
+		-D SAMPLE_ELF_FILE=$(word 2, $^) \
 		-D KERNEL_FILE=../$< -ibootloader/ \
 		-D ENTRY_POINT=$(shell objdump -f $(TARGETDIR)/$(TARGET)/release/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \
@@ -97,9 +103,10 @@ build/disk: build/kernel bootloader/*
 			awk '{$$1=$$1};1' | tail -n 1 | cut -d ' ' -f 3) \
 		bootloader/disk.asm
 
-build/diskdev: build/kerneldev bootloader/*
+build/diskdev: build/kerneldev build/packages/sample_elf bootloader/*
 	mkdir -p build
 	nasm $(NASMFLAGS) -o $@ \
+		-D SAMPLE_ELF_FILE=$(word 2, $^) \
 		-D KERNEL_FILE=../$< -ibootloader/ \
 		-D ENTRY_POINT=$(shell objdump -f $(TARGETDIR)/$(TARGET)/debug/kernel | \
 			grep "start address" | cut -d ' ' -f 3) \

@@ -17,6 +17,8 @@
 ; This file must contain only equ configuration paramters. It must not contain
 ; any code or data.
 config:
+.sample_elf_start:   equ @KELNER_SAMPLE_ELF_START@
+.sample_elf_end:     equ @KELNER_SAMPLE_ELF_END@
 .kernel_code_start:  equ @KELNER_KERNEL_CODE_START@
 .kernel_code_end:    equ @KELNER_KERNEL_CODE_END@
 .kernel_stack_end:   equ @KELNER_KERNEL_STACK_END@

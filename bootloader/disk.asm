@@ -35,3 +35,13 @@ bss_start:
 align 512
 payload_end:
 
+; Pad to make sample_elf_start aligned with the sector
+align 512
+sample_elf_start:
+
+%defstr SAMPLE_ELF_STR %[SAMPLE_ELF_FILE]
+incbin SAMPLE_ELF_STR
+
+; Pad to make sample_elf_end aligned with the sector
+align 512
+sample_elf_end:

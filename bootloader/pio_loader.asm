@@ -17,48 +17,6 @@ bits 64
 
 ; We will use LBA48 PIO mode here.
 pio_load:
-    ; Print payload_start
-    mov si, pio_loader_msg.payload_start
-    call vga_print
-    mov rax, config.kernel_code_start
-    call vga_printa
-    call vga_printnl
-
-    ; Print payload_end
-    mov si, pio_loader_msg.payload_end
-    call vga_print
-    mov rax, config.kernel_code_start + (payload_end - payload_start)
-    call vga_printa
-    call vga_printnl
-
-    ; Print BSS_SIZE
-    mov si, pio_loader_msg.bss_size
-    call vga_print
-    mov rax, BSS_SIZE
-    call vga_printa
-    call vga_printnl
-
-    ; We need to add BSS_SIZE here because it isn't included in the
-    ; payload yet.
-    mov rax, config.kernel_code_start \
-        + (BSS_SIZE + payload_end - payload_start)
-    ; The range between config.kernel_code_start and config.kernel_code_end is
-    ; for code and data, this means that if the payload_end is beyond
-    ; config.kernel_code_end, it will go out of the range. We need to throw
-    ; an error here.
-    mov rbx, config.kernel_code_end
-    cmp rax, rbx
-    ja .out_of_range
-
-    mov rax, config.kernel_code_start
-    mov [.load_address], rax
-    ; 512 must already divide the size of the payload because we
-    ; already pad it with zeroes.
-    mov rax, (payload_end - payload_start) / 512
-    mov [.sector_left], rax
-    ; start should be zero so this should not be a problem either.
-    mov rax, (payload_start - start) / 512
-    mov [.sector_start], rax
 
 .loop:
     ; Check if the number of sectors to be read is greater than 2 bytes.
@@ -166,17 +124,7 @@ pio_load:
     test rax, rax
     jnz .loop
 
-    ; Clear BSS section.
-    xor rax, rax
-    mov rdi, config.kernel_code_start + bss_start - payload_start
-    mov rcx, BSS_SIZE
-    rep stosb
-
     ret
-.out_of_range:
-    mov si, pio_loader_msg.out_of_range
-    call vga_println
-    hlt
 .load_error:
     mov si, pio_loader_msg.load_error
     call vga_println
@@ -202,8 +150,4 @@ wait_400ns:
     ret
 
 pio_loader_msg:
-.out_of_range:   db "The kernel image is too large. Please make it smaller.", 0
 .load_error:     db "There is an unknown error while loading kernel image.", 0
-.payload_start:  db "payload_start ", 0
-.payload_end:    db "payload_end   ", 0
-.bss_size:       db "bss_size      ", 0
