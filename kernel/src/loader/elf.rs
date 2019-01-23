@@ -106,7 +106,53 @@ fn parse_file_header(input_bytes: &[u8]) -> Result<FileHeader, ()> {
     })
 }
 
+fn load_segment(input_bytes: &[u8]) -> Result<(), ()> {
+    let mut bytes = input_bytes;
+    // We support only PT_LOAD.
+    assert_and_shift_bytes!(bytes, [1, 0, 0, 0]);
+
+    // TODO: We will ignore the flags for now and implement it later.
+    bytes = &bytes[4..];
+
+    let _offset = extract_and_shift_bytes!(bytes, 8) as u64;
+    let _address = extract_and_shift_bytes!(bytes, 8) as u64;
+
+    // Ignore suggested physical address.
+    bytes = &bytes[8..];
+
+    let _file_size = extract_and_shift_bytes!(bytes, 8) as u64;
+    let _mem_size = extract_and_shift_bytes!(bytes, 8) as u64;
+
+    // Ignore alignment.
+    #[allow(unused_assignments)]
+    bytes = &bytes[8..];
+
+    Ok(())
+}
+
 pub fn load_elf(bytes: &[u8]) -> Result<(), ()> {
-    let _file_header = parse_file_header(bytes)?;
+    let file_header = parse_file_header(bytes)?;
+
+    // The only supported program header entry size is 0x38 bytes because
+    // we support only x86-64.
+    if file_header.phentsize != 0x38 {
+        return Err(());
+    }
+
+    // If the blob is not big enough to find a program header table, return
+    // an error.
+    let phsize = file_header.phentsize * file_header.phnum;
+    if (bytes.len() as u64) < file_header.ph_offset + u64::from(phsize) {
+        return Err(());
+    }
+
+    for i in 0..file_header.phnum {
+        let ph_table = &bytes[(file_header.ph_offset as usize)..];
+        let phent_start = (i * file_header.phentsize) as usize;
+        let phent_end = ((i+1) * file_header.phentsize) as usize;
+        let phent = &ph_table[phent_start..phent_end];
+        let _ = load_segment(phent);
+    }
+
     Ok(())
 }

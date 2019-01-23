@@ -21,6 +21,7 @@
 #![feature(doc_cfg)]
 #![feature(lang_items)]
 #![feature(panic_info_message)]
+#![feature(stmt_expr_attributes)]
 #![no_std]
 #![cfg_attr(all(not(test), not(rustdoc)), no_main)]
 
